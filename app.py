@@ -62,6 +62,13 @@ class_labels = ['Akok', 'Cek Mek Molek','Ketayap', 'Kole Kacang', 'Kuih Bakar', 
 metrics = {'Accuracy': 0.0, 'Precision': 0.0, 'Recall': 0.0, 'F1-Score': 0.0}
 model_loaded = False
 
+# --- ADD THIS (use your exact model class names) ---
+RESEARCH_CLASSES = [
+    'Akok', 'Cek Mek Molek','Ketayap', 'Kole Kacang', 'Kuih Bakar', 
+    'Kuih Lapis', 'Kuih Lompang', 'Kuih Qasidah', 'Onde-onde', 
+    'Pulut Sekaya', 'Seri Muka'
+]
+
 # --- NEW: MongoDB Globals ---
 client = None
 db = None
@@ -104,69 +111,79 @@ GEMINI_JSON_SCHEMA = {
 }
 
 GEMINI_VISION_JSON_SCHEMA = {
-    "type": "OBJECT",
-    "properties": {
-        "is_kuih": {
-            "type": "BOOLEAN",
-            "description": "True if the image contains a traditional Malaysian kuih, False otherwise."
-        },
-        "kuih_name": {
-            "type": "STRING",
-            "description": "The name of the kuih. Null if is_kuih is False."
-        },
-        "estimated_calories": {
-            "type": "STRING",
-            "description": "The estimated calories per piece (e.g., '80-100 kcal'). Null if is_kuih is False."
-        },
-        "reason": {
-            "type": "STRING",
-            "description": "A brief explanation. If not a kuih, state what it is (e.g., 'This is a car.')"
-        }
+  "type": "OBJECT",
+  "properties": {
+    "is_kuih": {
+      "type": "BOOLEAN",
+      "description": "True if the image is a Malaysian kuih, False otherwise."
     },
-    "required": ["is_kuih", "kuih_name", "estimated_calories", "reason"]
+    "kuih_name": {
+      "type": "STRING",
+      "description": "The common name of the kuih (e.g., 'Kuih Lapis', 'Karipap'). Null if is_kuih is False."
+    },
+    "is_in_research_scope": {
+      "type": "BOOLEAN",
+      "description": "True if the kuih_name is found in the provided list, False otherwise. Null if is_kuih is False."
+    },
+    "estimated_calories": {
+      "type": "STRING",
+      "description": "Estimated calories per piece (e.g., '90-110 kcal'). ONLY provide this if is_in_research_scope is False. Otherwise, set to Null."
+    },
+    "reason": {
+      "type": "STRING",
+      "description": "If is_kuih is False, briefly state what the image is (e.g., 'This is a car.')"
+    }
+  },
+  "required": ["is_kuih", "kuih_name", "is_in_research_scope", "estimated_calories", "reason"]
 }
 
-def predict_with_gemini_vision(image_path):
-    """Analyzes an image using Gemini Vision to identify kuih."""
+def predict_with_gemini_vision(image_path, research_list):
+    """
+    Analyzes an image using Gemini Vision to check if it's a kuih 
+    and if it's in the research scope.
+    """
     if not GEMINI_AVAILABLE:
         return {"error": "Gemini AI is not configured."}
 
     try:
-        logger.info(f"Starting Gemini Vision prediction for: {image_path}")
+        logger.info(f"Starting Gemini Vision pre-analysis for: {image_path}")
 
-        # Configure the model for JSON output
         generation_config = genai.GenerationConfig(
             response_mime_type="application/json",
             response_schema=GEMINI_VISION_JSON_SCHEMA
         )
-        # Use a multimodal model
         model = genai.GenerativeModel(
             "gemini-2.5-flash",
             generation_config=generation_config
         )
 
-        # Prepare the prompt
-        prompt = """
-        You are a Malaysian food expert. Analyze this image.
-        1. Is this a traditional Malaysian kuih?
-        2. If YES: What is the name of this kuih? What are its estimated calories per piece?
-        3. If NO: Briefly state what the image is (e.g., 'a car', 'a plate of pasta') and confirm that it is not a Malaysian kuih.
-        Respond *only* with the JSON object.
+        # Convert the list to a string for the prompt
+        class_list_str = ", ".join(research_list)
+
+        prompt = f"""
+        You are a Malaysian food expert. Analyze this image and respond only in the required JSON format.
+        The list of kuih in my research scope is: [{class_list_str}]
+
+        Your tasks:
+        1.  Is this a Malaysian kuih?
+        2.  If NO: Set is_kuih to false, kuih_name to null, is_in_research_scope to null, and provide a brief reason.
+        3.  If YES: Set is_kuih to true and identify its common 'kuih_name'.
+        4.  Then, check if this 'kuih_name' is in my research scope list.
+        5.  If it IS in the scope: Set 'is_in_research_scope' to true and 'estimated_calories' to null.
+        6.  If it is NOT in the scope: Set 'is_in_research_scope' to false and provide an 'estimated_calories' per piece.
         """
 
-        # Load the image
         img = PIL.Image.open(image_path)
 
-        # Send prompt and image to the model
         response = model.generate_content([prompt, img])
         response_data = json.loads(response.text)
 
-        logger.info(f"Gemini Vision response: {response_data}")
+        logger.info(f"Gemini Vision pre-analysis response: {response_data}")
         return response_data
 
     except Exception as e:
         logger.error(f"Gemini Vision prediction failed: {e}")
-        return {"error": f"AI prediction failed: {e}"}
+        return {"error": f"AI analysis failed: {e}"}
 
 # --- UPDATED: Database Helpers (MongoDB Atlas) ---
 def init_db():
@@ -336,14 +353,11 @@ def handle_predict():
         'db_connection_ok': db_connection_ok,
         'feedback_stats': get_feedback_stats(),
         'available_classes': get_available_classes_from_db(),
-        'is_gemini_prediction': False # Default to false
+        'is_gemini_prediction': False  # Default to false (local model)
     }
 
-    # --- Check for Advanced Mode ---
-    advanced_mode_on = 'advanced_mode' in request.form
-
-    if not model_loaded and not advanced_mode_on: # Can't do anything if local model failed and advanced isn't on
-        return render_template('index.html', error="Model not loaded. Try Advanced Mode.", **render_args), 503
+    if not model_loaded or not GEMINI_AVAILABLE:
+        return render_template('index.html', error="System error: A required component (Model or AI) is not configured.", **render_args), 503
 
     file = request.files.get('file')
     if not file or file.filename == '':
@@ -352,57 +366,57 @@ def handle_predict():
         return render_template('index.html', error="Invalid file type.", **render_args), 400
 
     try:
+        # --- Step 1: Save the file ---
         fname = f"{uuid.uuid4().hex[:8]}_{secure_filename(file.filename)}"
         fpath = os.path.join(app.config['UPLOAD_FOLDER'], fname)
         file.save(fpath)
 
-        # --- NEW: Advanced Mode Logic ---
-        if advanced_mode_on:
-            if not GEMINI_AVAILABLE:
-                return render_template('index.html', error="Advanced Mode is unavailable (AI not configured).", **render_args), 503
+        # --- Step 2: Always pre-analyze with Gemini Vision ---
+        ai_result = predict_with_gemini_vision(fpath, RESEARCH_CLASSES)
 
-            logger.info("Using Advanced Mode (Gemini Vision)")
-            render_args['is_gemini_prediction'] = True
+        if "error" in ai_result:
+            return render_template('index.html', error=ai_result['error'], **render_args), 500
 
-            ai_result = predict_with_gemini_vision(fpath)
+        # --- Step 3: Check AI results and decide workflow ---
 
-            if "error" in ai_result:
-                return render_template('index.html', error=ai_result['error'], **render_args), 500
+        # Condition 1: Not a kuih
+        if not ai_result.get('is_kuih'):
+            logger.info("AI determined image is NOT a kuih.")
+            if os.path.exists(fpath): os.remove(fpath) # Clean up
+            return render_template('index.html', error=ai_result.get('reason', 'This does not appear to be a kuih.'), **render_args), 400
 
-            if not ai_result.get('is_kuih'):
-                # It's not a kuih, show the reason as an error
-                return render_template('index.html', error=ai_result.get('reason', 'AI analysis determined this is not a kuih.'), **render_args), 400
-
-            # It IS a kuih, populate args
-            kuih_name = ai_result.get('kuih_name')
+        # Condition 2: Is a kuih, but NOT in research scope (Use AI results)
+        elif not ai_result.get('is_in_research_scope'):
+            logger.info("AI determined kuih is OUTSIDE research scope. Using AI prediction.")
+            kuih_name = ai_result.get('kuih_name', 'Unknown Kuih')
             calories = ai_result.get('estimated_calories', 'N/A')
 
-            # Log this AI prediction to history
             log_prediction_history(kuih_name, calories)
 
             render_args.update({
                 'success': True,
                 'kuih_name': kuih_name,
-                'confidence': "100% (AI)", # Use a special string for AI
+                'confidence': "100% (AI)",
                 'confidence_value': 1.0,
                 'image_path': fname,
-                'request_feedback': False, # Never request feedback for AI
+                'request_feedback': False,
                 'calories': calories,
-                'weight': 'N/A' # AI won't know the weight
+                'weight': 'N/A',
+                'is_gemini_prediction': True # This will hide the feedback buttons
             })
 
             return render_template('index.html', **render_args)
 
-        # --- ORIGINAL: Local Model Logic ---
+        # Condition 3: Is a kuih AND is in research scope (Use local CNN model)
         else:
-            logger.info("Using Standard Mode (Local Model)")
+            logger.info("AI determined kuih is INSIDE research scope. Using local CNN.")
             kuih_name, conf = predict_kuih(fpath)
+
             if "Error" in kuih_name:
                  if os.path.exists(fpath): os.remove(fpath)
                  return render_template('index.html', error=kuih_name, **render_args), 500
 
             details = get_kuih_details_from_db(kuih_name)
-
             calories_to_log = details['calories'] if details else 'N/A'
             log_prediction_history(kuih_name, calories_to_log)
 
@@ -413,7 +427,7 @@ def handle_predict():
                 'confidence_value': conf,
                 'image_path': fname,
                 'request_feedback': conf < Config.MIN_CONFIDENCE_THRESHOLD,
-                'is_gemini_prediction': False # Explicitly set false
+                'is_gemini_prediction': False # This will show the feedback buttons
             })
 
             if details:
