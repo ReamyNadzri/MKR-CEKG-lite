@@ -13,6 +13,7 @@ from datetime import datetime
 import shutil
 import json
 import google.generativeai as genai
+import PIL.Image  # <-- ADD THIS IMPORT
 
 # --- NEW: MongoDB Imports ---
 try:
@@ -101,6 +102,71 @@ GEMINI_JSON_SCHEMA = {
     },
     "required": ["estimatedcalories","othersname","description", "fun_fact"]
 }
+
+GEMINI_VISION_JSON_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "is_kuih": {
+            "type": "BOOLEAN",
+            "description": "True if the image contains a traditional Malaysian kuih, False otherwise."
+        },
+        "kuih_name": {
+            "type": "STRING",
+            "description": "The name of the kuih. Null if is_kuih is False."
+        },
+        "estimated_calories": {
+            "type": "STRING",
+            "description": "The estimated calories per piece (e.g., '80-100 kcal'). Null if is_kuih is False."
+        },
+        "reason": {
+            "type": "STRING",
+            "description": "A brief explanation. If not a kuih, state what it is (e.g., 'This is a car.')"
+        }
+    },
+    "required": ["is_kuih", "kuih_name", "estimated_calories", "reason"]
+}
+
+def predict_with_gemini_vision(image_path):
+    """Analyzes an image using Gemini Vision to identify kuih."""
+    if not GEMINI_AVAILABLE:
+        return {"error": "Gemini AI is not configured."}
+
+    try:
+        logger.info(f"Starting Gemini Vision prediction for: {image_path}")
+
+        # Configure the model for JSON output
+        generation_config = genai.GenerationConfig(
+            response_mime_type="application/json",
+            response_schema=GEMINI_VISION_JSON_SCHEMA
+        )
+        # Use a multimodal model
+        model = genai.GenerativeModel(
+            "gemini-2.5-flash",
+            generation_config=generation_config
+        )
+
+        # Prepare the prompt
+        prompt = """
+        You are a Malaysian food expert. Analyze this image.
+        1. Is this a traditional Malaysian kuih?
+        2. If YES: What is the name of this kuih? What are its estimated calories per piece?
+        3. If NO: Briefly state what the image is (e.g., 'a car', 'a plate of pasta') and confirm that it is not a Malaysian kuih.
+        Respond *only* with the JSON object.
+        """
+
+        # Load the image
+        img = PIL.Image.open(image_path)
+
+        # Send prompt and image to the model
+        response = model.generate_content([prompt, img])
+        response_data = json.loads(response.text)
+
+        logger.info(f"Gemini Vision response: {response_data}")
+        return response_data
+
+    except Exception as e:
+        logger.error(f"Gemini Vision prediction failed: {e}")
+        return {"error": f"AI prediction failed: {e}"}
 
 # --- UPDATED: Database Helpers (MongoDB Atlas) ---
 def init_db():
@@ -269,11 +335,15 @@ def handle_predict():
         'model_loaded': model_loaded,
         'db_connection_ok': db_connection_ok,
         'feedback_stats': get_feedback_stats(),
-        'available_classes': get_available_classes_from_db()
+        'available_classes': get_available_classes_from_db(),
+        'is_gemini_prediction': False # Default to false
     }
 
-    if not model_loaded:
-        return render_template('index.html', error="Model not loaded.", **render_args), 503
+    # --- Check for Advanced Mode ---
+    advanced_mode_on = 'advanced_mode' in request.form
+
+    if not model_loaded and not advanced_mode_on: # Can't do anything if local model failed and advanced isn't on
+        return render_template('index.html', error="Model not loaded. Try Advanced Mode.", **render_args), 503
 
     file = request.files.get('file')
     if not file or file.filename == '':
@@ -286,31 +356,72 @@ def handle_predict():
         fpath = os.path.join(app.config['UPLOAD_FOLDER'], fname)
         file.save(fpath)
 
-        kuih_name, conf = predict_kuih(fpath)
-        if "Error" in kuih_name:
-             if os.path.exists(fpath): os.remove(fpath)
-             return render_template('index.html', error=kuih_name, **render_args), 500
+        # --- NEW: Advanced Mode Logic ---
+        if advanced_mode_on:
+            if not GEMINI_AVAILABLE:
+                return render_template('index.html', error="Advanced Mode is unavailable (AI not configured).", **render_args), 503
 
-        details = get_kuih_details_from_db(kuih_name)
-        
-        calories_to_log = details['calories'] if details else 'N/A'
-        log_prediction_history(kuih_name, calories_to_log)
-        
-        render_args.update({
-            'success': True,
-            'kuih_name': kuih_name,
-            'confidence': f"{conf*100:.2f}%",
-            'confidence_value': conf,
-            'image_path': fname,
-            'request_feedback': conf < Config.MIN_CONFIDENCE_THRESHOLD
-        })
+            logger.info("Using Advanced Mode (Gemini Vision)")
+            render_args['is_gemini_prediction'] = True
 
-        if details:
-            render_args.update(details)
+            ai_result = predict_with_gemini_vision(fpath)
+
+            if "error" in ai_result:
+                return render_template('index.html', error=ai_result['error'], **render_args), 500
+
+            if not ai_result.get('is_kuih'):
+                # It's not a kuih, show the reason as an error
+                return render_template('index.html', error=ai_result.get('reason', 'AI analysis determined this is not a kuih.'), **render_args), 400
+
+            # It IS a kuih, populate args
+            kuih_name = ai_result.get('kuih_name')
+            calories = ai_result.get('estimated_calories', 'N/A')
+
+            # Log this AI prediction to history
+            log_prediction_history(kuih_name, calories)
+
+            render_args.update({
+                'success': True,
+                'kuih_name': kuih_name,
+                'confidence': "100% (AI)", # Use a special string for AI
+                'confidence_value': 1.0,
+                'image_path': fname,
+                'request_feedback': False, # Never request feedback for AI
+                'calories': calories,
+                'weight': 'N/A' # AI won't know the weight
+            })
+
+            return render_template('index.html', **render_args)
+
+        # --- ORIGINAL: Local Model Logic ---
         else:
-             render_args.update({'calories': 'N/A', 'error_message': f"No details for {kuih_name}"})
+            logger.info("Using Standard Mode (Local Model)")
+            kuih_name, conf = predict_kuih(fpath)
+            if "Error" in kuih_name:
+                 if os.path.exists(fpath): os.remove(fpath)
+                 return render_template('index.html', error=kuih_name, **render_args), 500
 
-        return render_template('index.html', **render_args)
+            details = get_kuih_details_from_db(kuih_name)
+
+            calories_to_log = details['calories'] if details else 'N/A'
+            log_prediction_history(kuih_name, calories_to_log)
+
+            render_args.update({
+                'success': True,
+                'kuih_name': kuih_name,
+                'confidence': f"{conf*100:.2f}%",
+                'confidence_value': conf,
+                'image_path': fname,
+                'request_feedback': conf < Config.MIN_CONFIDENCE_THRESHOLD,
+                'is_gemini_prediction': False # Explicitly set false
+            })
+
+            if details:
+                render_args.update(details)
+            else:
+                 render_args.update({'calories': 'N/A', 'error_message': f"No details for {kuih_name}"})
+
+            return render_template('index.html', **render_args)
 
     except Exception as e:
         logger.error(f"Predict route error: {e}")

@@ -3,7 +3,7 @@ REM Navigate to the directory
 cd MTKRCE
 
 REM Set the environment variable
-set GEMINI_API_KEY=AIzaSyB1DSZ3lue1OE-f1gdhIx14AWCBPE59gLo
+set GEMINI_API_KEY=AIzaSyAUUOECMv2uZ-TCuMcbt2gYp2O91WXGP4k
 set MONGO_DB_PASSWORD=xDW9wopR0U8oFQFH
 
 REM Run the Python application
