@@ -398,7 +398,7 @@ def get_gemini_info():
         data = request.get_json()
         kuih_name = data.get('kuih')
         generation_config = genai.GenerationConfig(response_mime_type="application/json", response_schema=GEMINI_JSON_SCHEMA)
-        model = genai.GenerativeModel("gemini-1.5-flash", generation_config=generation_config)
+        model = genai.GenerativeModel("gemini-2.5-flash-preview-09-2025", generation_config=generation_config)
         prompt = f"Provide estimated calories, description, and a fun fact for Malaysian kuih: {kuih_name}."
         response = model.generate_content(prompt)
         return jsonify(json.loads(response.text))
