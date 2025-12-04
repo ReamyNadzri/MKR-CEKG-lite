@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Malaysian Kuih Recognition & AI Analysis</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <script>
         tailwind.config = {
             theme: {
@@ -25,51 +28,126 @@
             }
         }
     </script>
+
     <style>
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
         .glass-panel {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         .loader-dots div {
             animation-timing-function: cubic-bezier(0, 1, 1, 0);
         }
-        .loader-dots div:nth-child(1) { left: 8px; animation: loader-dots1 0.6s infinite; }
-        .loader-dots div:nth-child(2) { left: 8px; animation: loader-dots2 0.6s infinite; }
-        .loader-dots div:nth-child(3) { left: 32px; animation: loader-dots2 0.6s infinite; }
-        .loader-dots div:nth-child(4) { left: 56px; animation: loader-dots3 0.6s infinite; }
-        @keyframes loader-dots1 { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-        @keyframes loader-dots3 { 0% { transform: scale(1); } 100% { transform: scale(0); } }
-        @keyframes loader-dots2 { 0% { transform: translate(0, 0); } 100% { transform: translate(24px, 0); } }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .loader-dots div {
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+
+        .loader-dots div:nth-child(1) {
+            left: 8px;
+            animation: loader-dots1 0.6s infinite;
+        }
+
+        .loader-dots div:nth-child(2) {
+            left: 8px;
+            animation: loader-dots2 0.6s infinite;
+        }
+
+        .loader-dots div:nth-child(3) {
+            left: 32px;
+            animation: loader-dots2 0.6s infinite;
+        }
+
+        .loader-dots div:nth-child(4) {
+            left: 56px;
+            animation: loader-dots3 0.6s infinite;
+        }
+
+        @keyframes loader-dots1 {
+            0% {
+                transform: scale(0);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        @keyframes loader-dots3 {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(0);
+            }
+        }
+
+        @keyframes loader-dots2 {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(24px, 0);
+            }
+        }
     </style>
 </head>
+
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col relative overflow-x-hidden">
 
     <nav class="sticky top-0 z-40 w-full glass-panel border-b border-slate-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-emerald-800 flex items-center justify-content text-white shadow-lg flex justify-center items-center text-xl">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-emerald-800 flex items-center justify-content text-white shadow-lg flex justify-center items-center text-xl">
                         🥟
                     </div>
                     <div>
-                        <h1 class="font-serif font-bold text-lg leading-tight text-slate-900">Malaysian Kuih Recognition</h1>
+                        <h1 class="font-serif font-bold text-lg leading-tight text-slate-900">Malaysian Kuih Recognition
+                        </h1>
                         <p class="text-xs text-slate-500 hidden md:block">CNN Variants Enhanced with Gemini AI</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button onclick="toggleHistory()" class="group flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 hover:border-primary hover:text-primary transition-all shadow-sm">
+                    <button onclick="toggleHistory()"
+                        class="group flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 hover:border-primary hover:text-primary transition-all shadow-sm">
                         <i class="fa-solid fa-clock-rotate-left text-slate-400 group-hover:text-primary"></i>
                         <span class="text-sm font-medium">History</span>
                     </button>
-                    <a href="/" class="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors" title="Reset">
+                    <a href="/" class="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors"
+                        title="Reset">
                         <i class="fa-solid fa-arrows-rotate"></i>
                     </a>
                 </div>
@@ -78,49 +156,59 @@
     </nav>
 
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        
+
         <div class="mb-8">
             {% if error %}
-                <div class="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center gap-3 animate-pulse">
-                    <i class="fa-solid fa-circle-exclamation"></i> {{ error }}
-                </div>
+            <div
+                class="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center gap-3 animate-pulse">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ error }}
+            </div>
             {% elif not model_loaded %}
-                <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center gap-3">
-                    <i class="fa-solid fa-triangle-exclamation"></i> System Initializing... Model loading.
-                </div>
+            <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center gap-3">
+                <i class="fa-solid fa-triangle-exclamation"></i> System Initializing... Model loading.
+            </div>
             {% else %}
-                <div class="flex items-center gap-2 text-sm text-emerald-600 font-medium px-2">
-                    <span class="relative flex h-3 w-3">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </span>
-                    System Active: CNN & Gemini AI Connected
-                </div>
+            <div class="flex items-center gap-2 text-sm text-emerald-600 font-medium px-2">
+                <span class="relative flex h-3 w-3">
+                    <span
+                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                System Active: CNN & Gemini AI Connected
+            </div>
             {% endif %}
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
+
             <div class="lg:col-span-4 space-y-6">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <h2 class="font-serif text-xl font-bold text-slate-800 mb-1">Image Analysis</h2>
                     <p class="text-sm text-slate-500 mb-6">Upload a photo of any traditional Kuih.</p>
 
                     <form id="uploadForm" method="post" action="/predict" enctype="multipart/form-data">
-                        <div id="dropZone" class="relative group cursor-pointer flex flex-col items-center justify-center w-full h-64 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 transition-all duration-300" onclick="document.getElementById('fileInput').click()">
-                            
+                        <div id="dropZone"
+                            class="relative group cursor-pointer flex flex-col items-center justify-center w-full h-64 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 transition-all duration-300"
+                            onclick="document.getElementById('fileInput').click()">
+
                             <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
-                                <div class="w-16 h-16 mb-4 rounded-full bg-white shadow-sm flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+                                <div
+                                    class="w-16 h-16 mb-4 rounded-full bg-white shadow-sm flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
                                     📸
                                 </div>
-                                <p class="mb-2 text-sm text-slate-600 font-medium">Click or drag image here</p>
+                                <p class="mb-2 text-sm text-slate-600 font-medium">Click or drag image
+                                    here</p>
                                 <p class="text-xs text-slate-400">PNG, JPG, WEBP (Max 16MB)</p>
-                                <div id="fileNameDisplay" class="mt-4 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full hidden truncate max-w-[200px]"></div>
+                                <div id="fileNameDisplay"
+                                    class="mt-4 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full hidden truncate max-w-[200px]">
+                                </div>
                             </div>
                             <input type="file" id="fileInput" name="file" accept="image/*" class="hidden" />
                         </div>
 
-                        <button type="submit" class="mt-6 w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl font-semibold shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2 transform active:scale-95" {% if not model_loaded %}disabled{% endif %}>
+                        <button type="submit"
+                            class="mt-6 w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl font-semibold shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2 transform active:scale-95"
+                            {% if not model_loaded %}disabled{% endif %}>
                             <span>Analyze Kuih</span>
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </button>
@@ -128,10 +216,14 @@
                 </div>
 
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 class="font-semibold text-slate-700 mb-4 text-sm uppercase tracking-wider">Identifiable Kuih</h3>
+                    <h3 class="font-semibold text-slate-700 mb-4 text-sm uppercase tracking-wider">
+                        Identifiable Kuih
+                    </h3>
                     <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar">
                         {% for kuih in available_classes %}
-                            <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs rounded-full border border-slate-200">{{ kuih }}</span>
+                        <span
+                            class="px-3 py-1 bg-slate-100 text-slate-600 text-xs rounded-full border border-slate-200">{{
+                            kuih }}</span>
                         {% endfor %}
                     </div>
                 </div>
@@ -140,27 +232,34 @@
             <div class="lg:col-span-8">
                 {% if kuih_name and success %}
                 <div class="space-y-6 animate-fade-in-up">
-                    
+
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                         <div class="grid md:grid-cols-2">
                             <div class="h-64 md:h-auto relative bg-slate-100">
-                                <img src="{{ url_for('serve_uploaded_file', filename=image_path) }}" class="absolute inset-0 w-full h-full object-cover" alt="Uploaded Kuih">
-                                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                                <img src="{{ url_for('serve_uploaded_file', filename=image_path) }}"
+                                    class="absolute inset-0 w-full h-full object-cover" alt="Uploaded Kuih">
+                                <div
+                                    class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                                     <p class="text-white text-xs font-medium">Input Image</p>
                                 </div>
                             </div>
-                            
+
                             <div class="p-6 flex flex-col justify-center">
-                                <div class="mb-1 text-xs font-bold tracking-wider text-emerald-600 uppercase">CNN Prediction Result</div>
-                                <h2 class="font-serif text-3xl font-bold text-slate-800 mb-2">{{ kuih_name }}</h2>
-                                
+                                <div class="mb-1 text-xs font-bold tracking-wider text-emerald-600 uppercase">
+                                    CNN
+                                    Prediction Result</div>
+                                <h2 class="font-serif text-3xl font-bold text-slate-800 mb-2">{{
+                                    kuih_name }}</h2>
+
                                 <div class="flex items-center gap-4 mb-6">
-                                    <div class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+                                    <div
+                                        class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
                                         {{ confidence }} Confidence
                                     </div>
                                     {% if weight and weight != 'N/A' %}
                                     <div class="text-xs text-slate-500">
-                                        <i class="fa-solid fa-scale-balanced mr-1"></i> Avg {{ weight }}g
+                                        <i class="fa-solid fa-scale-balanced mr-1"></i> Avg {{ weight
+                                        }}g
                                     </div>
                                     {% endif %}
                                 </div>
@@ -168,59 +267,83 @@
                                 <div class="grid grid-cols-2 gap-4 mb-6">
                                     <div class="p-3 bg-orange-50 rounded-xl border border-orange-100">
                                         <div class="text-xs text-orange-600 mb-1">Calories / Piece</div>
-                                        <div class="text-xl font-bold text-slate-800" id="baseCalories">{{ calories }} <span class="text-xs font-normal text-slate-500">kcal</span></div>
+                                        <div class="text-xl font-bold text-slate-800" id="baseCalories">
+                                            {{ calories }}
+                                            <span class="text-xs font-normal text-slate-500">kcal</span>
+                                        </div>
                                     </div>
-                                    
+
                                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
                                         <div class="flex justify-between items-center mb-1">
                                             <div class="text-xs text-slate-500">I ate (pieces)</div>
-                                            <input type="number" id="pieceInput" value="1" min="0" step="0.5" oninput="calculateTotal()" class="w-12 h-6 text-center text-sm border rounded bg-white focus:ring-1 focus:ring-emerald-500 outline-none">
+                                            <input type="number" id="pieceInput" value="1" min="0" step="0.5"
+                                                oninput="calculateTotal()"
+                                                class="w-12 h-6 text-center text-sm border rounded bg-white focus:ring-1 focus:ring-emerald-500 outline-none">
                                         </div>
-                                        <div class="text-xl font-bold text-emerald-700" id="totalCalories">{{ calories }} <span class="text-xs font-normal text-slate-500">kcal total</span></div>
+                                        <div class="text-xl font-bold text-emerald-700" id="totalCalories">{{ calories
+                                            }} <span class="text-xs font-normal text-slate-500">kcal
+                                                total</span></div>
                                     </div>
                                 </div>
 
                                 {% if not is_gemini_prediction %}
                                 <div class="border-t border-slate-100 pt-4 mt-auto">
-                                    <p class="text-xs text-slate-400 mb-2">Is this prediction accurate?</p>
+                                    <p class="text-xs text-slate-400 mb-2">Is this prediction accurate?
+                                    </p>
                                     <div class="flex gap-2">
-                                        <button onclick="submitFeedback(true)" class="flex-1 py-1.5 rounded-lg border border-slate-200 text-xs font-medium hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors">
+                                        <button onclick="submitFeedback(true)"
+                                            class="flex-1 py-1.5 rounded-lg border border-slate-200 text-xs font-medium hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors">
                                             Yes, Correct
                                         </button>
-                                        <button onclick="document.getElementById('correctionSection').classList.remove('hidden')" class="flex-1 py-1.5 rounded-lg border border-slate-200 text-xs font-medium hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors">
+                                        <button
+                                            onclick="document.getElementById('correctionSection').classList.remove('hidden')"
+                                            class="flex-1 py-1.5 rounded-lg border border-slate-200 text-xs font-medium hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors">
                                             No, Incorrect
                                         </button>
                                     </div>
                                     <div id="correctionSection" class="hidden mt-3">
                                         <div class="flex gap-2">
-                                            <select id="actualKuihSelect" class="flex-1 text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white">
+                                            <select id="actualKuihSelect"
+                                                class="flex-1 text-xs border border-slate-300 rounded-lg px-2 py-1.5 bg-white">
                                                 <option value="">-- Select Actual Kuih --</option>
-                                                {% for k in available_classes %}<option value="{{k}}">{{k}}</option>{% endfor %}
+                                                {% for k in available_classes %}<option value="{{k}}">
+                                                    {{k}}</option>{%
+                                                endfor %}
                                             </select>
-                                            <button onclick="submitCorrection()" class="bg-slate-800 text-white text-xs px-3 rounded-lg hover:bg-black">Submit</button>
+                                            <button onclick="submitCorrection()"
+                                                class="bg-slate-800 text-white text-xs px-3 rounded-lg hover:bg-black">Submit</button>
                                         </div>
                                     </div>
-                                    <div id="feedbackMessage" class="hidden mt-2 text-xs p-2 rounded bg-slate-100 text-center"></div>
+                                    <div id="feedbackMessage"
+                                        class="hidden mt-2 text-xs p-2 rounded bg-slate-100 text-center">
+                                    </div>
                                 </div>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
 
-                    <div id="gemini-card" class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-100 shadow-md p-6 lg:p-8">
-                        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-gradient-to-br from-indigo-200 to-purple-200 opacity-20 blur-3xl"></div>
-                        
+                    <div id="gemini-card"
+                        class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-100 shadow-md p-6 lg:p-8">
+                        <div
+                            class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-gradient-to-br from-indigo-200 to-purple-200 opacity-20 blur-3xl">
+                        </div>
+
                         <div class="relative z-10">
                             <div class="flex items-center gap-3 mb-6">
                                 <div class="p-2 bg-white rounded-lg shadow-sm text-indigo-600">
                                     <i class="fa-solid fa-robot"></i>
                                 </div>
-                                <h3 class="font-serif text-xl font-bold text-slate-800">Generative Knowledge Engine</h3>
+                                <h3 class="font-serif text-xl font-bold text-slate-800">Generative
+                                    Knowledge Engine</h3>
                             </div>
 
                             <div id="gemini-loading" class="space-y-4">
-                                <div class="flex items-center gap-2 text-indigo-600 text-sm font-medium animate-pulse mb-4">
-                                    <i class="fa-solid fa-spinner fa-spin"></i> Gemini AI is generating cultural context...
+                                <div
+                                    class="flex items-center gap-2 text-indigo-600 text-sm font-medium animate-pulse mb-4">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> Gemini AI is generating
+                                    cultural
+                                    context...
                                 </div>
                                 <div class="h-4 bg-indigo-100 rounded w-3/4 animate-pulse"></div>
                                 <div class="h-4 bg-indigo-100 rounded w-1/2 animate-pulse"></div>
@@ -228,29 +351,34 @@
                             </div>
 
                             <div id="gemini-content" class="hidden space-y-6">
-                                
+
                                 <div class="prose prose-sm text-slate-600 max-w-none">
                                     <div class="mb-4">
-                                        <h4 class="text-xs font-bold text-indigo-500 uppercase tracking-wide mb-1">Description</h4>
+                                        <h4 class="text-xs font-bold text-indigo-500 uppercase tracking-wide mb-1">
+                                            Description</h4>
                                         <p id="ai-desc" class="leading-relaxed"></p>
                                     </div>
-                                    
+
                                     <div class="grid sm:grid-cols-2 gap-4">
                                         <div>
-                                            <h4 class="text-xs font-bold text-indigo-500 uppercase tracking-wide mb-1">Alternative Names</h4>
+                                            <h4 class="text-xs font-bold text-indigo-500 uppercase tracking-wide mb-1">
+                                                Alternative Names</h4>
                                             <p id="ai-names" class="font-medium text-slate-800"></p>
                                         </div>
                                         <div>
-                                            <h4 class="text-xs font-bold text-indigo-500 uppercase tracking-wide mb-1">Est. Caloric Range</h4>
+                                            <h4 class="text-xs font-bold text-indigo-500 uppercase tracking-wide mb-1">
+                                                Est. Caloric Range</h4>
                                             <p id="ai-cal" class="font-medium text-slate-800"></p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-indigo-100 flex gap-4 items-start">
+                                <div
+                                    class="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-indigo-100 flex gap-4 items-start">
                                     <div class="text-2xl">💡</div>
                                     <div>
-                                        <h4 class="text-xs font-bold text-slate-800 uppercase mb-1">Did you know?</h4>
+                                        <h4 class="text-xs font-bold text-slate-800 uppercase mb-1">Did
+                                            you know?</h4>
                                         <p id="ai-fact" class="text-sm text-slate-600 italic"></p>
                                     </div>
                                 </div>
@@ -259,17 +387,21 @@
                     </div>
                 </div>
 
-                <div id="hiddenData" class="hidden" data-kuih="{{ kuih_name }}" data-img="{{ image_path }}" data-cal="{{ calories }}"></div>
+                <div id="hiddenData" class="hidden" data-kuih="{{ kuih_name }}" data-img="{{ image_path }}"
+                    data-cal="{{ calories }}"></div>
                 {% else %}
-                
-                <div class="h-full flex flex-col items-center justify-center text-center p-12 bg-white rounded-2xl border border-dashed border-slate-300 text-slate-400">
+
+                <div
+                    class="h-full flex flex-col items-center justify-center text-center p-12 bg-white rounded-2xl border border-dashed border-slate-300 text-slate-400">
                     <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                         <i class="fa-solid fa-bowl-food text-3xl opacity-20"></i>
                     </div>
                     <h3 class="text-lg font-medium text-slate-600">No Analysis Yet</h3>
-                    <p class="max-w-xs mx-auto text-sm mt-2">Upload an image from the left panel to see CNN classification and Gemini AI insights here.</p>
+                    <p class="max-w-xs mx-auto text-sm mt-2">Upload an image from the left panel to see
+                        CNN
+                        classification and Gemini AI insights here.</p>
                 </div>
-                
+
                 {% endif %}
             </div>
         </div>
@@ -277,23 +409,36 @@
 
     <footer class="mt-auto border-t border-slate-200 bg-white py-8">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            <p class="text-sm text-slate-500 font-serif">Malaysian Traditional Kuih Recognition using CNN Architecture Variants Enhanced with Gemini AI for Calories Estimation & Knowledge Generation</p>
+            <p class="text-sm text-slate-500 font-serif">Malaysian Traditional Kuih Recognition using
+                CNN Architecture
+                Variants Enhanced with Gemini AI for Calories Estimation & Knowledge Generation</p>
             <p class="text-xs text-slate-400 mt-2">Project: FINAL PROPOSAL REPORT.pdf Implementation</p>
         </div>
     </footer>
 
-    <div id="historyOverlay" onclick="toggleHistory()" class="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 hidden transition-opacity opacity-0"></div>
-    <div id="historyPanel" class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+
+    <div id="historyOverlay" onclick="toggleHistory()" class="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 hidden transition-opacity opacity
+                    -0"></div>
+    <div id="historyPanel"
+        class="fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
         <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <h3 class="font-serif font-bold text-slate-800">Scan History</h3>
-            <button onclick="toggleHistory()" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <button onclick="toggleHistory()" class="text-slate-400 hover:text-red-500 transition-colors"><i
+                    class="fa-solid fa-xmark text-xl"></i></button>
         </div>
         <div id="historyList" class="flex-1 overflow-y-auto p-4 space-y-3">
             <div class="text-center text-sm text-slate-400 mt-10">Loading...</div>
         </div>
+        <div class="p-4 border-t border-slate-100 bg-slate-50">
+            <div class="flex justify-between items-center">
+                <span class="text-sm font-bold text-slate-700">Total Calories</span>
+                <span id="historyTotalCalories" class="text-lg font-bold text-emerald-600">0 kcal</span>
+            </div>
+        </div>
     </div>
 
-    <div id="loading-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] hidden flex-col items-center justify-center text-white">
+    <div id="loading-overlay"
+        class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] hidden flex-col items-center justify-center text-white">
         <div class="loader-dots relative w-20 h-5 mb-4">
             <div class="absolute top-0 w-3 h-3 rounded-full bg-emerald-400"></div>
             <div class="absolute top-0 w-3 h-3 rounded-full bg-emerald-400"></div>
@@ -302,6 +447,9 @@
         </div>
         <h3 class="text-xl font-serif font-bold tracking-wide">Processing Image</h3>
         <p class="text-slate-300 text-sm mt-2">Running CNN & Vision Analysis...</p>
+    </div>
+
+
     </div>
 
     <script>
@@ -316,17 +464,17 @@
                 dropZone.addEventListener(eventName, preventDefaults, false);
             });
             function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
-            
+
             ['dragenter', 'dragover'].forEach(e => dropZone.classList.add('bg-emerald-50', 'border-emerald-400'));
             ['dragleave', 'drop'].forEach(e => dropZone.classList.remove('bg-emerald-50', 'border-emerald-400'));
-            
+
             dropZone.addEventListener('drop', (e) => {
                 const dt = e.dataTransfer;
                 fileInput.files = dt.files;
                 handleFiles(dt.files);
             });
 
-            fileInput.addEventListener('change', function() {
+            fileInput.addEventListener('change', function () {
                 handleFiles(this.files);
             });
         }
@@ -349,11 +497,12 @@
             });
         }
 
+
         // --- History Toggle ---
         function toggleHistory() {
             const panel = document.getElementById('historyPanel');
             const overlay = document.getElementById('historyOverlay');
-            
+
             if (panel.classList.contains('translate-x-full')) {
                 // Open
                 panel.classList.remove('translate-x-full');
@@ -370,26 +519,68 @@
 
         async function fetchHistory() {
             const list = document.getElementById('historyList');
+            const totalEl = document.getElementById('historyTotalCalories');
             try {
                 const res = await fetch('/api/history');
                 const data = await res.json();
-                
+
                 if (data.length === 0) {
                     list.innerHTML = '<div class="text-center text-sm text-slate-400 mt-4">No history records found.</div>';
+                    if (totalEl) totalEl.textContent = '0 kcal';
                     return;
                 }
-                
-                list.innerHTML = data.map(item => `
-                    <div class="p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="font-bold text-slate-700 text-sm">${item.kuih_name}</span>
-                            <span class="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full">${item.calories} kcal</span>
-                        </div>
-                        <div class="text-xs text-slate-400 text-right">${new Date(item.timestamp).toLocaleDateString()} ${new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                    </div>
-                `).join('');
+
+                let totalCal = 0;
+
+                list.innerHTML = data.map(item => {
+                    let calVal = 0;
+                    const calStr = String(item.calories);
+                    if (calStr.includes('-')) {
+                        const parts = calStr.split('-');
+                        calVal = (parseInt(parts[0]) + parseInt(parts[1])) / 2;
+                    } else {
+                        calVal = parseInt(calStr) || 0;
+                    }
+                    totalCal += calVal;
+
+                    return `
+                                    <div class="p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <span class="font-bold text-slate-700 text-sm">${item.kuih_name}</span>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full">${item.calories} kcal</span>
+                                                <button onclick="deleteHistoryItem('${item._id}')" class="text-slate-300 hover:text-red-500 transition-colors p-1" title="Delete">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="text-xs text-slate-400 text-right">${new Date(item.timestamp).toLocaleDateString()} ${new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                    </div>
+                                `;
+                }).join('');
+
+                if (totalEl) totalEl.textContent = Math.round(totalCal).toLocaleString() + ' kcal';
+
             } catch (e) {
                 list.innerHTML = '<div class="text-red-400 text-sm text-center">Failed to load history.</div>';
+            }
+        }
+
+
+        async function deleteHistoryItem(id) {
+            if (!confirm('Delete this item?')) return;
+
+            try {
+                const res = await fetch(`/api/history/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    fetchHistory();
+                } else {
+                    alert('Failed to delete item');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error deleting item');
             }
         }
 
@@ -399,8 +590,8 @@
             // Handle range strings like "90-110" by taking average, or simple int
             let baseCalStr = document.getElementById('hiddenData')?.getAttribute('data-cal');
             let baseCal = 0;
-            
-            if(baseCalStr && baseCalStr.includes('-')) {
+
+            if (baseCalStr && baseCalStr.includes('-')) {
                 const parts = baseCalStr.split('-');
                 baseCal = (parseInt(parts[0]) + parseInt(parts[1])) / 2;
             } else {
@@ -410,7 +601,6 @@
             const total = isNaN(baseCal) ? "N/A" : Math.round(pieces * baseCal).toLocaleString();
             document.getElementById('totalCalories').innerHTML = `${total} <span class="text-xs font-normal text-slate-500">kcal total</span>`;
         }
-
         // --- Gemini & OnLoad ---
         document.addEventListener('DOMContentLoaded', () => {
             const hidden = document.getElementById('hiddenData');
@@ -419,8 +609,8 @@
                 if (kuihName) {
                     loadGemini(kuihName);
                     // Scroll to results on mobile
-                    if(window.innerWidth < 1024) {
-                        hidden.parentElement.scrollIntoView({behavior: 'smooth'});
+                    if (window.innerWidth < 1024) {
+                        hidden.parentElement.scrollIntoView({ behavior: 'smooth' });
                     }
                 }
             }
@@ -430,7 +620,7 @@
             const card = document.getElementById('gemini-card');
             const loader = document.getElementById('gemini-loading');
             const content = document.getElementById('gemini-content');
-            
+
             if (!card) return;
 
             try {
@@ -440,14 +630,14 @@
                     body: JSON.stringify({ kuih: kuihName })
                 });
                 const data = await res.json();
-                
-                if(data.error) throw new Error(data.error);
+
+                if (data.error) throw new Error(data.error);
 
                 document.getElementById('ai-cal').textContent = data.estimatedcalories || "Not available";
                 document.getElementById('ai-names').textContent = data.othersname || "None";
                 document.getElementById('ai-desc').textContent = data.description || "No description available.";
                 document.getElementById('ai-fact').textContent = data.fun_fact || "Check back later for fun facts!";
-                
+
                 loader.classList.add('hidden');
                 content.classList.remove('hidden');
                 content.classList.add('animate-fade-in');
@@ -487,18 +677,19 @@
                     actual_label: actualLabel
                 })
             })
-            .then(r => r.json())
-            .then(d => {
-                msgEl.textContent = d.message;
-                msgEl.classList.remove('hidden');
-                if (d.success) {
-                    msgEl.classList.add('text-emerald-700', 'bg-emerald-100');
-                    if (!isCorrect) document.getElementById('correctionSection').classList.add('hidden');
-                } else {
-                    msgEl.classList.add('text-red-700', 'bg-red-100');
-                }
-            });
+                .then(r => r.json())
+                .then(d => {
+                    msgEl.textContent = d.message;
+                    msgEl.classList.remove('hidden');
+                    if (d.success) {
+                        msgEl.classList.add('text-emerald-700', 'bg-emerald-100');
+                        if (!isCorrect) document.getElementById('correctionSection').classList.add('hidden');
+                    } else {
+                        msgEl.classList.add('text-red-700', 'bg-red-100');
+                    }
+                });
         }
     </script>
 </body>
+
 </html>
