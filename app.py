@@ -502,17 +502,48 @@ def get_gemini_info():
         return jsonify({"error": "Failed to get AI insights."}), 500
 # --- END NEW ---
 
+from bson import ObjectId # Added for ObjectId handling
+
+# ... (existing imports)
+
 @app.route('/api/history')
 def get_history():
     history_data = []
     if db_connection_ok:
         try:
             history_collection = db.prediction_history
-            history_data = list(history_collection.find({}, {"_id": 0}).sort("timestamp", -1).limit(50))
+            
+            # Filter by today (00:00:00 to 23:59:59)
+            today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            query = {"timestamp": {"$gte": today_start}}
+            
+            # Get records
+            cursor = history_collection.find(query).sort("timestamp", -1)
+            
+            for doc in cursor:
+                # Convert ObjectId to string for JSON serialization
+                doc['_id'] = str(doc['_id'])
+                history_data.append(doc)
+                
         except Exception as e:
              logger.error(f"History fetch error from MongoDB: {e}")
     
     return jsonify(history_data)
+
+@app.route('/api/history/<id>', methods=['DELETE'])
+def delete_history_item(id):
+    if not db_connection_ok:
+        return jsonify({'success': False, 'message': 'Database not connected'}), 500
+    try:
+        history_collection = db.prediction_history
+        result = history_collection.delete_one({'_id': ObjectId(id)})
+        if result.deleted_count > 0:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'message': 'Item not found'}), 404
+    except Exception as e:
+        logger.error(f"Delete error: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
