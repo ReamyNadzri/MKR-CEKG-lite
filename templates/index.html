@@ -26,6 +26,7 @@
         }
     </script>
     <style>
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -37,7 +38,9 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        .loader-dots div { animation-timing-function: cubic-bezier(0, 1, 1, 0); }
+        .loader-dots div {
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
         .loader-dots div:nth-child(1) { left: 8px; animation: loader-dots1 0.6s infinite; }
         .loader-dots div:nth-child(2) { left: 8px; animation: loader-dots2 0.6s infinite; }
         .loader-dots div:nth-child(3) { left: 32px; animation: loader-dots2 0.6s infinite; }
@@ -45,9 +48,6 @@
         @keyframes loader-dots1 { 0% { transform: scale(0); } 100% { transform: scale(1); } }
         @keyframes loader-dots3 { 0% { transform: scale(1); } 100% { transform: scale(0); } }
         @keyframes loader-dots2 { 0% { transform: translate(0, 0); } 100% { transform: translate(24px, 0); } }
-        
-        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col relative overflow-x-hidden">
@@ -56,7 +56,9 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-emerald-800 flex items-center justify-center text-white shadow-lg text-xl">🥟</div>
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-emerald-800 flex items-center justify-content text-white shadow-lg flex justify-center items-center text-xl">
+                        🥟
+                    </div>
                     <div>
                         <h1 class="font-serif font-bold text-lg leading-tight text-slate-900">Malaysian Kuih Recognition</h1>
                         <p class="text-xs text-slate-500 hidden md:block">CNN Variants Enhanced with Gemini AI</p>
@@ -76,6 +78,7 @@
     </nav>
 
     <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
         <div class="mb-8">
             {% if error %}
                 <div class="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center gap-3 animate-pulse">
@@ -97,6 +100,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
             <div class="lg:col-span-4 space-y-6">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <h2 class="font-serif text-xl font-bold text-slate-800 mb-1">Image Analysis</h2>
@@ -104,22 +108,28 @@
 
                     <form id="uploadForm" method="post" action="/predict" enctype="multipart/form-data">
                         <div id="dropZone" class="relative group cursor-pointer flex flex-col items-center justify-center w-full h-64 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 transition-all duration-300" onclick="document.getElementById('fileInput').click()">
+                            
                             <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
-                                <div class="w-16 h-16 mb-4 rounded-full bg-white shadow-sm flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">📸</div>
+                                <div class="w-16 h-16 mb-4 rounded-full bg-white shadow-sm flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+                                    📸
+                                </div>
                                 <p class="mb-2 text-sm text-slate-600 font-medium">Click or drag image here</p>
-                                <p class="text-xs text-slate-400">PNG, JPG, WEBP</p>
+                                <p class="text-xs text-slate-400">PNG, JPG, WEBP (Max 16MB)</p>
                                 <div id="fileNameDisplay" class="mt-4 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full hidden truncate max-w-[200px]"></div>
                             </div>
                             <input type="file" id="fileInput" name="file" accept="image/*" class="hidden" />
                         </div>
+
                         <button type="submit" class="mt-6 w-full py-3.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl font-semibold shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2 transform active:scale-95" {% if not model_loaded %}disabled{% endif %}>
-                            <span>Analyze Kuih</span><i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Analyze Kuih</span>
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </button>
                     </form>
                 </div>
+
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <h3 class="font-semibold text-slate-700 mb-4 text-sm uppercase tracking-wider">Identifiable Kuih</h3>
-                    <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                    <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar">
                         {% for kuih in available_classes %}
                             <span class="px-3 py-1 bg-slate-100 text-slate-600 text-xs rounded-full border border-slate-200">{{ kuih }}</span>
                         {% endfor %}
@@ -130,40 +140,28 @@
             <div class="lg:col-span-8">
                 {% if kuih_name and success %}
                 <div class="space-y-6 animate-fade-in-up">
+                    
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                         <div class="grid md:grid-cols-2">
                             <div class="h-64 md:h-auto relative bg-slate-100">
                                 <img src="{{ url_for('serve_uploaded_file', filename=image_path) }}" class="absolute inset-0 w-full h-full object-cover" alt="Uploaded Kuih">
+                                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                                    <p class="text-white text-xs font-medium">Input Image</p>
+                                </div>
                             </div>
+                            
                             <div class="p-6 flex flex-col justify-center">
-                                {% if confidence_value < 0.7 and top_predictions|length > 1 %}
-                                    <div class="mb-4 p-3 bg-amber-50 border border-amber-100 rounded-xl">
-                                        <div class="flex items-center gap-2 text-amber-700 text-xs font-bold uppercase tracking-wider mb-2">
-                                            <i class="fa-solid fa-circle-question"></i> Ambiguous Result
-                                        </div>
-                                        <p class="text-xs text-slate-600 mb-3">Model unsure. Did you mean:</p>
-                                        <div class="space-y-2">
-                                            {% for name, score in top_predictions %}
-                                            <div class="flex justify-between items-center text-sm p-2 bg-white rounded-lg border border-amber-100 {{ 'ring-1 ring-emerald-500' if loop.index0 == 0 else '' }}">
-                                                <span class="font-bold text-slate-700">{{ name }}</span>
-                                                <span class="text-xs text-slate-400 font-mono">{{ "%.1f"|format(score * 100) }}%</span>
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                    <div class="text-xs text-slate-400 italic mb-2">Showing top match:</div>
-                                {% else %}
-                                    <div class="mb-1 text-xs font-bold tracking-wider text-emerald-600 uppercase">CNN Prediction Result</div>
-                                {% endif %}
-
+                                <div class="mb-1 text-xs font-bold tracking-wider text-emerald-600 uppercase">CNN Prediction Result</div>
                                 <h2 class="font-serif text-3xl font-bold text-slate-800 mb-2">{{ kuih_name }}</h2>
                                 
                                 <div class="flex items-center gap-4 mb-6">
-                                    <div class="px-3 py-1 rounded-full {{ 'bg-amber-100 text-amber-700' if confidence_value < 0.7 else 'bg-emerald-50 text-emerald-700' }} text-xs font-bold border border-emerald-100">
-                                        {{ confidence }} Match
+                                    <div class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+                                        {{ confidence }} Confidence
                                     </div>
                                     {% if weight and weight != 'N/A' %}
-                                    <div class="text-xs text-slate-500"><i class="fa-solid fa-scale-balanced mr-1"></i> Avg {{ weight }}g</div>
+                                    <div class="text-xs text-slate-500">
+                                        <i class="fa-solid fa-scale-balanced mr-1"></i> Avg {{ weight }}g
+                                    </div>
                                     {% endif %}
                                 </div>
 
@@ -172,6 +170,7 @@
                                         <div class="text-xs text-orange-600 mb-1">Calories / Piece</div>
                                         <div class="text-xl font-bold text-slate-800" id="baseCalories">{{ calories }} <span class="text-xs font-normal text-slate-500">kcal</span></div>
                                     </div>
+                                    
                                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
                                         <div class="flex justify-between items-center mb-1">
                                             <div class="text-xs text-slate-500">I ate (pieces)</div>
@@ -183,9 +182,14 @@
 
                                 {% if not is_gemini_prediction %}
                                 <div class="border-t border-slate-100 pt-4 mt-auto">
+                                    <p class="text-xs text-slate-400 mb-2">Is this prediction accurate?</p>
                                     <div class="flex gap-2">
-                                        <button onclick="submitFeedback(true)" class="flex-1 py-1.5 rounded-lg border border-slate-200 text-xs font-medium hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors">Yes, Correct</button>
-                                        <button onclick="document.getElementById('correctionSection').classList.remove('hidden')" class="flex-1 py-1.5 rounded-lg border border-slate-200 text-xs font-medium hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors">No, Incorrect</button>
+                                        <button onclick="submitFeedback(true)" class="flex-1 py-1.5 rounded-lg border border-slate-200 text-xs font-medium hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors">
+                                            Yes, Correct
+                                        </button>
+                                        <button onclick="document.getElementById('correctionSection').classList.remove('hidden')" class="flex-1 py-1.5 rounded-lg border border-slate-200 text-xs font-medium hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors">
+                                            No, Incorrect
+                                        </button>
                                     </div>
                                     <div id="correctionSection" class="hidden mt-3">
                                         <div class="flex gap-2">
@@ -205,43 +209,67 @@
 
                     <div id="gemini-card" class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-100 shadow-md p-6 lg:p-8">
                         <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-gradient-to-br from-indigo-200 to-purple-200 opacity-20 blur-3xl"></div>
+                        
                         <div class="relative z-10">
                             <div class="flex items-center gap-3 mb-6">
-                                <div class="p-2 bg-white rounded-lg shadow-sm text-indigo-600"><i class="fa-solid fa-robot"></i></div>
+                                <div class="p-2 bg-white rounded-lg shadow-sm text-indigo-600">
+                                    <i class="fa-solid fa-robot"></i>
+                                </div>
                                 <h3 class="font-serif text-xl font-bold text-slate-800">Generative Knowledge Engine</h3>
                             </div>
+
                             <div id="gemini-loading" class="space-y-4">
-                                <div class="flex items-center gap-2 text-indigo-600 text-sm font-medium animate-pulse mb-4"><i class="fa-solid fa-spinner fa-spin"></i> Gemini AI is generating cultural context...</div>
+                                <div class="flex items-center gap-2 text-indigo-600 text-sm font-medium animate-pulse mb-4">
+                                    <i class="fa-solid fa-spinner fa-spin"></i> Gemini AI is generating cultural context...
+                                </div>
                                 <div class="h-4 bg-indigo-100 rounded w-3/4 animate-pulse"></div>
                                 <div class="h-4 bg-indigo-100 rounded w-1/2 animate-pulse"></div>
                                 <div class="h-24 bg-indigo-50 rounded-xl animate-pulse w-full"></div>
                             </div>
+
                             <div id="gemini-content" class="hidden space-y-6">
+                                
                                 <div class="prose prose-sm text-slate-600 max-w-none">
                                     <div class="mb-4">
                                         <h4 class="text-xs font-bold text-indigo-500 uppercase tracking-wide mb-1">Description</h4>
                                         <p id="ai-desc" class="leading-relaxed"></p>
                                     </div>
+                                    
                                     <div class="grid sm:grid-cols-2 gap-4">
-                                        <div><h4 class="text-xs font-bold text-indigo-500 uppercase tracking-wide mb-1">Alt Names</h4><p id="ai-names" class="font-medium text-slate-800"></p></div>
-                                        <div><h4 class="text-xs font-bold text-indigo-500 uppercase tracking-wide mb-1">Est. Calories</h4><p id="ai-cal" class="font-medium text-slate-800"></p></div>
+                                        <div>
+                                            <h4 class="text-xs font-bold text-indigo-500 uppercase tracking-wide mb-1">Alternative Names</h4>
+                                            <p id="ai-names" class="font-medium text-slate-800"></p>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs font-bold text-indigo-500 uppercase tracking-wide mb-1">Est. Caloric Range</h4>
+                                            <p id="ai-cal" class="font-medium text-slate-800"></p>
+                                        </div>
                                     </div>
                                 </div>
+
                                 <div class="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-indigo-100 flex gap-4 items-start">
                                     <div class="text-2xl">💡</div>
-                                    <div><h4 class="text-xs font-bold text-slate-800 uppercase mb-1">Did you know?</h4><p id="ai-fact" class="text-sm text-slate-600 italic"></p></div>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-slate-800 uppercase mb-1">Did you know?</h4>
+                                        <p id="ai-fact" class="text-sm text-slate-600 italic"></p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
                 <div id="hiddenData" class="hidden" data-kuih="{{ kuih_name }}" data-img="{{ image_path }}" data-cal="{{ calories }}"></div>
                 {% else %}
+                
                 <div class="h-full flex flex-col items-center justify-center text-center p-12 bg-white rounded-2xl border border-dashed border-slate-300 text-slate-400">
-                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4"><i class="fa-solid fa-bowl-food text-3xl opacity-20"></i></div>
+                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-bowl-food text-3xl opacity-20"></i>
+                    </div>
                     <h3 class="text-lg font-medium text-slate-600">No Analysis Yet</h3>
-                    <p class="max-w-xs mx-auto text-sm mt-2">Upload an image to see results.</p>
+                    <p class="max-w-xs mx-auto text-sm mt-2">Upload an image from the left panel to see CNN classification and Gemini AI insights here.</p>
                 </div>
+                
                 {% endif %}
             </div>
         </div>
@@ -260,7 +288,9 @@
             <h3 class="font-serif font-bold text-slate-800">Scan History</h3>
             <button onclick="toggleHistory()" class="text-slate-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
         </div>
-        <div id="historyList" class="flex-1 overflow-y-auto p-4 space-y-3"><div class="text-center text-sm text-slate-400 mt-10">Loading...</div></div>
+        <div id="historyList" class="flex-1 overflow-y-auto p-4 space-y-3">
+            <div class="text-center text-sm text-slate-400 mt-10">Loading...</div>
+        </div>
     </div>
 
     <div id="loading-overlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] hidden flex-col items-center justify-center text-white">
@@ -271,131 +301,202 @@
             <div class="absolute top-0 w-3 h-3 rounded-full bg-emerald-400"></div>
         </div>
         <h3 class="text-xl font-serif font-bold tracking-wide">Processing Image</h3>
-        <p class="text-slate-300 text-sm mt-2">Compressing & Analyzing...</p>
+        <p class="text-slate-300 text-sm mt-2">Running CNN & Vision Analysis...</p>
     </div>
 
     <script>
+        // --- Drag & Drop & File Input ---
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const fileNameDisplay = document.getElementById('fileNameDisplay');
-        const uploadForm = document.getElementById('uploadForm');
-        const loadingOverlay = document.getElementById('loading-overlay');
+        const form = document.getElementById('uploadForm');
 
         if (dropZone) {
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation() }));
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+            function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+            
             ['dragenter', 'dragover'].forEach(e => dropZone.classList.add('bg-emerald-50', 'border-emerald-400'));
             ['dragleave', 'drop'].forEach(e => dropZone.classList.remove('bg-emerald-50', 'border-emerald-400'));
-            dropZone.addEventListener('drop', e => { fileInput.files = e.dataTransfer.files; handleFiles(e.dataTransfer.files) });
-            fileInput.addEventListener('change', function() { handleFiles(this.files) });
+            
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                fileInput.files = dt.files;
+                handleFiles(dt.files);
+            });
+
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
         }
+
         function handleFiles(files) {
             if (files.length > 0) {
-                fileNameDisplay.textContent = "Selected: " + files[0].name;
+                const file = files[0];
+                fileNameDisplay.textContent = "Selected: " + file.name;
                 fileNameDisplay.classList.remove('hidden');
                 dropZone.classList.add('border-emerald-500', 'bg-emerald-50');
             }
         }
 
-        // --- Client-Side Compression Logic ---
-        if (uploadForm) {
-            uploadForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const files = fileInput.files;
-                if (files.length === 0) return;
-                loadingOverlay.classList.remove('hidden');
-                loadingOverlay.classList.add('flex');
-                try {
-                    const resizedBlob = await resizeImage(files[0], 800, 0.8);
-                    const formData = new FormData();
-                    formData.append('file', resizedBlob, files[0].name);
-                    const response = await fetch('/predict', { method: 'POST', body: formData });
-                    if (response.ok) {
-                        const newHtml = await response.text();
-                        document.documentElement.innerHTML = newHtml;
-                        const hidden = document.getElementById('hiddenData');
-                        if(hidden) loadGemini(hidden.getAttribute('data-kuih'));
-                        window.history.pushState({}, "", "/");
-                    } else { alert("Server Error"); loadingOverlay.classList.add('hidden'); }
-                } catch (err) { console.error(err); alert("Error processing image."); loadingOverlay.classList.add('hidden'); }
+        if (form) {
+            form.addEventListener('submit', () => {
+                if (fileInput.files.length > 0) {
+                    document.getElementById('loading-overlay').classList.remove('hidden');
+                    document.getElementById('loading-overlay').classList.add('flex');
+                }
             });
         }
 
-        function resizeImage(file, maxDimension, quality) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        let w = img.width, h = img.height;
-                        if (w > h) { if (w > maxDimension) { h *= maxDimension / w; w = maxDimension; } }
-                        else { if (h > maxDimension) { w *= maxDimension / h; h = maxDimension; } }
-                        const canvas = document.createElement('canvas');
-                        canvas.width = w; canvas.height = h;
-                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        canvas.toBlob(resolve, file.type, quality);
-                    };
-                    img.onerror = reject;
-                };
-                reader.onerror = reject;
-            });
-        }
-
+        // --- History Toggle ---
         function toggleHistory() {
             const panel = document.getElementById('historyPanel');
             const overlay = document.getElementById('historyOverlay');
+            
             if (panel.classList.contains('translate-x-full')) {
-                panel.classList.remove('translate-x-full'); overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.remove('opacity-0'), 10); fetchHistory();
+                // Open
+                panel.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                fetchHistory();
             } else {
-                panel.classList.add('translate-x-full'); overlay.classList.add('opacity-0'); setTimeout(() => overlay.classList.add('hidden'), 300);
+                // Close
+                panel.classList.add('translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
             }
         }
+
         async function fetchHistory() {
             const list = document.getElementById('historyList');
             try {
-                const res = await fetch('/api/history'); const data = await res.json();
-                if (data.length === 0) { list.innerHTML = '<div class="text-center text-sm text-slate-400 mt-4">No history.</div>'; return; }
-                list.innerHTML = data.map(item => `<div class="p-3 bg-white rounded-xl border border-slate-100 shadow-sm"><div class="flex justify-between items-start mb-1"><span class="font-bold text-slate-700 text-sm">${item.kuih_name}</span><span class="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full">${item.calories} kcal</span></div><div class="text-xs text-slate-400 text-right">${new Date(item.timestamp).toLocaleDateString()}</div></div>`).join('');
-            } catch (e) { list.innerHTML = '<div class="text-red-400 text-sm text-center">Load failed.</div>'; }
+                const res = await fetch('/api/history');
+                const data = await res.json();
+                
+                if (data.length === 0) {
+                    list.innerHTML = '<div class="text-center text-sm text-slate-400 mt-4">No history records found.</div>';
+                    return;
+                }
+                
+                list.innerHTML = data.map(item => `
+                    <div class="p-3 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="font-bold text-slate-700 text-sm">${item.kuih_name}</span>
+                            <span class="text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full">${item.calories} kcal</span>
+                        </div>
+                        <div class="text-xs text-slate-400 text-right">${new Date(item.timestamp).toLocaleDateString()} ${new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = '<div class="text-red-400 text-sm text-center">Failed to load history.</div>';
+            }
         }
 
+        // --- Calculator ---
         function calculateTotal() {
             const pieces = parseFloat(document.getElementById('pieceInput').value) || 0;
-            let baseCal = parseInt(document.getElementById('hiddenData')?.getAttribute('data-cal'));
+            // Handle range strings like "90-110" by taking average, or simple int
+            let baseCalStr = document.getElementById('hiddenData')?.getAttribute('data-cal');
+            let baseCal = 0;
+            
+            if(baseCalStr && baseCalStr.includes('-')) {
+                const parts = baseCalStr.split('-');
+                baseCal = (parseInt(parts[0]) + parseInt(parts[1])) / 2;
+            } else {
+                baseCal = parseInt(baseCalStr);
+            }
+
             const total = isNaN(baseCal) ? "N/A" : Math.round(pieces * baseCal).toLocaleString();
             document.getElementById('totalCalories').innerHTML = `${total} <span class="text-xs font-normal text-slate-500">kcal total</span>`;
         }
 
+        // --- Gemini & OnLoad ---
         document.addEventListener('DOMContentLoaded', () => {
             const hidden = document.getElementById('hiddenData');
-            if (hidden && hidden.getAttribute('data-kuih')) loadGemini(hidden.getAttribute('data-kuih'));
+            if (hidden) {
+                const kuihName = hidden.getAttribute('data-kuih');
+                if (kuihName) {
+                    loadGemini(kuihName);
+                    // Scroll to results on mobile
+                    if(window.innerWidth < 1024) {
+                        hidden.parentElement.scrollIntoView({behavior: 'smooth'});
+                    }
+                }
+            }
         });
 
         async function loadGemini(kuihName) {
-            const loader = document.getElementById('gemini-loading'), content = document.getElementById('gemini-content');
+            const card = document.getElementById('gemini-card');
+            const loader = document.getElementById('gemini-loading');
+            const content = document.getElementById('gemini-content');
+            
+            if (!card) return;
+
             try {
-                const res = await fetch('/gemini-info', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kuih: kuihName }) });
+                const res = await fetch('/gemini-info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ kuih: kuihName })
+                });
                 const data = await res.json();
+                
                 if(data.error) throw new Error(data.error);
-                document.getElementById('ai-cal').textContent = data.estimatedcalories;
-                document.getElementById('ai-names').textContent = data.othersname;
-                document.getElementById('ai-desc').textContent = data.description;
-                document.getElementById('ai-fact').textContent = data.fun_fact;
-                loader.classList.add('hidden'); content.classList.remove('hidden'); content.classList.add('animate-fade-in');
-            } catch (e) { loader.innerHTML = `<div class="text-amber-600 text-sm bg-amber-50 p-3 rounded-lg">AI insights unavailable.</div>`; }
+
+                document.getElementById('ai-cal').textContent = data.estimatedcalories || "Not available";
+                document.getElementById('ai-names').textContent = data.othersname || "None";
+                document.getElementById('ai-desc').textContent = data.description || "No description available.";
+                document.getElementById('ai-fact').textContent = data.fun_fact || "Check back later for fun facts!";
+                
+                loader.classList.add('hidden');
+                content.classList.remove('hidden');
+                content.classList.add('animate-fade-in');
+
+            } catch (e) {
+                loader.innerHTML = `<div class="text-amber-600 text-sm bg-amber-50 p-3 rounded-lg"><i class="fa-solid fa-triangle-exclamation mr-2"></i>AI insights unavailable: ${e.message}</div>`;
+            }
         }
 
-        function submitFeedback(isCorrect) { sendFeedback(isCorrect, null); }
-        function submitCorrection() { const actual = document.getElementById('actualKuihSelect').value; if (!actual) return alert("Select Kuih."); sendFeedback(false, actual); }
-        function sendFeedback(isCorrect, actual) {
+        // --- Feedback Logic ---
+        function submitFeedback(isCorrect) {
+            sendFeedback(isCorrect, null);
+        }
+
+        function submitCorrection() {
+            const actual = document.getElementById('actualKuihSelect').value;
+            if (!actual) {
+                alert("Please select the correct Kuih type.");
+                return;
+            }
+            sendFeedback(false, actual);
+        }
+
+        function sendFeedback(isCorrect, actualLabel) {
             const h = document.getElementById('hiddenData');
-            fetch('/submit_feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ predicted_label: h.getAttribute('data-kuih'), image_path: h.getAttribute('data-img'), is_correct: isCorrect, actual_label: actual }) })
-            .then(r => r.json()).then(d => {
-                const msg = document.getElementById('feedbackMessage');
-                msg.textContent = d.message; msg.classList.remove('hidden');
-                msg.classList.add(d.success ? 'text-emerald-700' : 'text-red-700', d.success ? 'bg-emerald-100' : 'bg-red-100');
-                if (d.success && !isCorrect) document.getElementById('correctionSection').classList.add('hidden');
+            const predicted = h.getAttribute('data-kuih');
+            const imgPath = h.getAttribute('data-img');
+            const msgEl = document.getElementById('feedbackMessage');
+
+            fetch('/submit_feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    predicted_label: predicted,
+                    image_path: imgPath,
+                    is_correct: isCorrect,
+                    actual_label: actualLabel
+                })
+            })
+            .then(r => r.json())
+            .then(d => {
+                msgEl.textContent = d.message;
+                msgEl.classList.remove('hidden');
+                if (d.success) {
+                    msgEl.classList.add('text-emerald-700', 'bg-emerald-100');
+                    if (!isCorrect) document.getElementById('correctionSection').classList.add('hidden');
+                } else {
+                    msgEl.classList.add('text-red-700', 'bg-red-100');
+                }
             });
         }
     </script>
