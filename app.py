@@ -506,6 +506,19 @@ from bson import ObjectId # Added for ObjectId handling
 
 # ... (existing imports)
 
+# --- NEW ROUTES FOR TAB NAVIGATION ---
+@app.route('/overview')
+def overview():
+    return render_template('overview.html')
+
+@app.route('/system')
+def system():
+    return render_template('system.html')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
 @app.route('/api/history')
 def get_history():
     history_data = []

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Project Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Playfair Display', serif;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <nav class="sticky top-0 z-40 w-full glass-panel border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20 relative">
+                <a href="/" class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center text-white shadow-lg text-xl">
+                        🥟</div>
+                    <h1 class="font-bold text-lg leading-tight text-slate-900">Malaysian Kuih Recog.</h1>
+                </a>
+                <div
+                    class="hidden md:flex absolute left-1/2 transform -translate-x-1/2 items-center gap-1 p-1 bg-slate-100/80 rounded-full border border-slate-200">
+                    <a href="/overview"
+                        class="px-4 py-1.5 text-xs font-semibold text-slate-600 rounded-full hover:bg-white hover:text-emerald-600 hover:shadow-sm transition-all">Overview</a>
+                    <a href="/system"
+                        class="px-4 py-1.5 text-xs font-semibold text-slate-600 rounded-full hover:bg-white hover:text-emerald-600 hover:shadow-sm transition-all">System</a>
+                    <a href="/about"
+                        class="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-full shadow-sm">About</a>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="/"
+                        class="px-4 py-2 bg-slate-900 text-white text-xs rounded-full hover:bg-slate-800 transition">Back
+                        to App</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-5xl mx-auto px-4 py-12 w-full">
+
+        <div class="text-center mb-16">
+            <h1 class="text-4xl font-bold text-slate-900 mb-4">About the Project</h1>
+            <p class="text-slate-500 max-w-2xl mx-auto">Connecting technology with tradition.</p>
+        </div>
+
+        <div class="mb-12">
+            [cite_start]<h2 class="text-2xl font-serif font-bold text-slate-800 mb-6">Project Objectives [cite: 162]
+            </h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div
+                    class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-200 transition-colors">
+                    <div
+                        class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-magnifying-glass"></i></div>
+                    <h3 class="font-bold text-slate-800 mb-2">Identify Implementation</h3>
+                    [cite_start]<p class="text-sm text-slate-600">To study and identify the implementation of CNN
+                        algorithms in image recognition and classification[cite: 164].</p>
+                </div>
+                <div
+                    class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-200 transition-colors">
+                    <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-code"></i></div>
+                    <h3 class="font-bold text-slate-800 mb-2">Develop Prototype</h3>
+                    [cite_start]<p class="text-sm text-slate-600">To develop a functional CNN-based recognition
+                        prototype specifically for Malaysian Kuih[cite: 165].</p>
+                </div>
+                <div
+                    class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-emerald-200 transition-colors">
+                    <div
+                        class="w-10 h-10 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-chart-line"></i></div>
+                    <h3 class="font-bold text-slate-800 mb-2">Evaluate Performance</h3>
+                    [cite_start]<p class="text-sm text-slate-600">To rigorously evaluate the model using accuracy,
+                        precision, recall, and F1-score metrics[cite: 166].</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 mb-12">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                [cite_start]<h3 class="font-serif text-xl font-bold text-slate-800 mb-4">Project Scope [cite: 167]</h3>
+                <ul class="space-y-3 text-slate-600 text-sm">
+                    [cite_start]<li class="flex items-start gap-2"><i
+                            class="fa-solid fa-location-dot text-slate-400 mt-1"></i> <span>Focuses on Kuih from the
+                            <strong>East Coast</strong> (Kelantan, Terengganu, Pahang)[cite: 172].</span></li>
+                    [cite_start]<li class="flex items-start gap-2"><i
+                            class="fa-solid fa-database text-slate-400 mt-1"></i> <span>Dataset contains 10 distinct
+                            classes with 100-200 images per class[cite: 174].</span></li>
+                    [cite_start]<li class="flex items-start gap-2"><i class="fa-solid fa-users text-slate-400 mt-1"></i>
+                        <span>Target users include health-conscious individuals, culinary students, and tourists[cite:
+                            170].</span></li>
+                </ul>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                [cite_start]<h3 class="font-serif text-xl font-bold text-slate-800 mb-4">Significance [cite: 184]</h3>
+                <ul class="space-y-3 text-slate-600 text-sm">
+                    [cite_start]<li class="flex items-start gap-2"><i
+                            class="fa-solid fa-heart-pulse text-red-400 mt-1"></i> <span><strong>Public Health:</strong>
+                            Aids in obesity reduction by providing accurate calorie data[cite: 201].</span></li>
+                    [cite_start]<li class="flex items-start gap-2"><i
+                            class="fa-solid fa-book-open text-amber-400 mt-1"></i> <span><strong>Cultural
+                                Heritage:</strong> Preserves traditional culinary knowledge for younger
+                            generations[cite: 187].</span></li>
+                    [cite_start]<li class="flex items-start gap-2"><i
+                            class="fa-solid fa-money-bill-trend-up text-emerald-400 mt-1"></i>
+                        <span><strong>Economic:</strong> Helps small-scale food vendors digitize and promote their
+                            products[cite: 213].</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="text-center text-xs text-slate-400 pt-8 border-t border-slate-100">
+            <p>Author: <strong>Rahimi Rusyuddin Bin Mohd Nazri</strong> | Supervisor: <strong>Ts. Dr. Hasiah Binti
+                    Mohamed@Omar</strong> </p>
+        </div>
+
+    </main>
+</body>
+
+</html>
