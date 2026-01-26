@@ -14,6 +14,8 @@ import shutil
 import json
 import google.generativeai as genai
 import PIL.Image  # <-- ADD THIS IMPORT
+import google.genai as genai_new # Explicit import for new SDK
+# from google.genai import types # We will access types via genai_new.types
 
 # --- NEW: MongoDB Imports ---
 try:
@@ -483,7 +485,8 @@ def get_gemini_info():
         # --- Create the prompt ---
         prompt = f"""
         You are a Malaysian food expert. 
-        Provide estimation calories, serving and the sources and others names and a 2-3 sentence description and one interesting fun fact for the following Malaysian kuih: {kuih_name}.
+        Provide estimation calories, serving and the sources and others names and a 2-3 sentence description and 
+        one interesting fun fact for the following Malaysian kuih: {kuih_name}.
         Ensure the fun fact is different from the description.
         """
         
@@ -501,6 +504,135 @@ def get_gemini_info():
         logger.exception(f"Error calling Gemini API: {e}")
         return jsonify({"error": "Failed to get AI insights."}), 500
 # --- END NEW ---
+
+@app.route('/generate_poster', methods=['POST'])
+def generate_poster():
+    """Generates a recipe poster using Gemini AI (New SDK) with Image Input."""
+    # Note: We re-check API Key availability here because the global check was for the old SDK
+    # But usually they use the same key.
+    if not API_KEY: # Re-using the global API_KEY variable
+        return jsonify({"error": "AI service is not configured."}), 503
+
+    try:
+        data = request.get_json()
+        kuih_name = data.get('kuih')
+        
+        image_filename = data.get('image_filename') # Get the uploaded filename
+        calories = data.get('calories', 'N/A') # Get calories
+
+        if not kuih_name:
+            return jsonify({"error": "No kuih name provided."}), 400
+        
+        # Resolve image path
+        image_path = None
+        if image_filename:
+             # Sanitize just in case, though it comes from our internal logic usually
+             image_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(image_filename))
+        
+        if not image_path or not os.path.exists(image_path):
+             return jsonify({"error": "Original image not found for poster generation."}), 400
+
+        logger.info(f"Generating poster for: {kuih_name} using image: {image_filename}")
+
+        # --- Initialize Client (New SDK) ---
+        client = genai_new.Client(api_key=API_KEY)
+
+        # --- Construct the Prompt ---
+        prompt = f"""
+        Ultra-clean modern recipe infographic. Showcase {kuih_name} in a visually appealing finished form—sliced, plated, or
+portioned—floating slightly in perspective or angled view. Arrange ingredients,
+steps, and tips around the dish in a dynamic editorial layout, not restricted
+to top-down. Ingredients Section: Include icons or mini illustrations for each
+ingredient with quantities. Arrange them in clusters, lists, or circular flows
+connected visually to the dish. Steps Section: Show preparation steps with
+numbered panels, arrows, or lines, forming a logical flow around the main dish.
+Include small cooking icons (knife, pan, oven, timer) where helpful. Additional
+Info (optional): Total calories, prep/cook time, servings, spice
+level—displayed as clean bubbles or badges near the dish. Visual Style:
+Editorial infographic meets lifestyle food photography. Vibrant, natural food
+colors, subtle drop shadows, clean vector icons, modern typography, soft
+gradients or glassmorphism for step panels. Accent colors can highlight key
+info (calories: {calories}, prep time). Composition Guidelines: Finished meal as hero
+visual (perspective or angled) Ingredients and steps flow dynamically around
+the dish Clear visual hierarchy: dish > steps > ingredients > optional
+stats Enough negative space to keep design airy and readable Lighting &
+Background: Soft, natural studio lighting, minimal textured or gradient
+background for premium editorial feel. Output: 1080×1080, ultra-crisp,
+social-feed optimized, no watermark.`
+        """
+
+        # --- Verify Image Before Sending ---
+        try:
+            test_img = PIL.Image.open(image_path)
+            logger.info(f"Image loaded successfully: {test_img.format}, {test_img.size}, {test_img.mode}")
+        except Exception as e:
+            logger.error(f"Failed to open image at {image_path}: {e}")
+            return jsonify({"error": f"Could not load image: {str(e)}"}), 500
+
+        # --- Generate Content ---
+        logger.info(f"Sending image to Gemini API for poster generation...")
+        response = client.models.generate_content(
+            model="gemini-3-pro-image-preview",
+            contents=[
+                prompt,
+                PIL.Image.open(image_path),  # Open fresh for API
+            ],
+            config=genai_new.types.GenerateContentConfig(
+                response_modalities=['IMAGE'], # Requesting Image
+                image_config=genai_new.types.ImageConfig(
+                    aspect_ratio="1:1", # Square as requested (1080x1080 implied)
+                    image_size="2K"
+                ),
+            )
+        )
+        logger.info(f"Received response from Gemini API")
+        
+        # --- Handle Response ---
+        # "for part in response.parts: if image:= part.as_image(): image.save..."
+        # We want to return base64.
+        
+        for part in response.parts:
+            # Check for inline_data first (raw bytes) - safer for Base64 conversion
+            if hasattr(part, 'inline_data') and part.inline_data:
+                 logger.info("Found inline_data in response part.")
+                 import base64
+                 # data is bytes
+                 raw_data = part.inline_data.data
+                 logger.info(f"Raw data type: {type(raw_data)}, Size: {len(raw_data) if raw_data else 0} bytes")
+                 
+                 image_data = base64.b64encode(raw_data).decode('utf-8')
+                 mime_type = part.inline_data.mime_type or "image/png"
+                 logger.info(f"Returning Base64 image. Mime: {mime_type}")
+                 return jsonify({"success": True, "image_base64": f"data:{mime_type};base64,{image_data}"})
+                 
+            # Fallback: Try as_image() but handle potential custom object issues
+            if hasattr(part, 'as_image'):
+                 try:
+                     logger.info("Trying part.as_image()...")
+                     img = part.as_image()
+                     if img:
+                         import io
+                         import base64
+                         buffered = io.BytesIO()
+                         # Try standard PIL save
+                         img.save(buffered, format="PNG")
+                         img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
+                         logger.info("Returning Base64 image via PIL save.")
+                         return jsonify({"success": True, "image_base64": f"data:image/png;base64,{img_str}"})
+                 except Exception as e:
+                     logger.warning(f"Failed to process image via as_image(): {e}")
+                     # Continue to next part or text
+
+        # If we got here, maybe only text?
+        text_content = ""
+        if response.text:
+            text_content = response.text
+        
+        return jsonify({"success": False, "message": "Model returned no image. Text: " + text_content})
+
+    except Exception as e:
+        logger.exception(f"Error generating poster: {e}")
+        return jsonify({"error": f"Failed to generate poster: {str(e)}"}), 500
 
 from bson import ObjectId # Added for ObjectId handling
 

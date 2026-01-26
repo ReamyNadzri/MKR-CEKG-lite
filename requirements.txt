@@ -1,7 +1,8 @@
-flask
-gunicorn
-tensorflow
-pymongo
-google-generativeai
-numpy
-pillow
+Flask==3.0.0
+tensorflow==2.15.0
+pymongo==4.6.1
+google-generativeai==0.3.2
+google-genai==0.2.2
+Pillow==10.2.0
+numpy==1.26.3
+Werkzeug==3.0.1
