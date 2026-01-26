@@ -687,13 +687,16 @@ def get_gemini_info():
 
 @app.route('/generate_poster', methods=['POST'])
 def generate_poster():
-    """Creates a background job for poster generation and returns job_id immediately."""
+    """Creates a background job for poster generation and returns job_id immediately.
+    Falls back to synchronous mode if Redis is unavailable."""
     if not API_KEY:
         return jsonify({"error": "AI service is not configured."}), 503
     
-    # If Redis is not available, fallback to synchronous (will timeout on Railway)
+    # If Redis is not available, fallback to synchronous mode
     if not redis_connection_ok:
-        return jsonify({"error": "Background job system not available. Please contact administrator."}), 503
+        logger.warning("Redis not available, falling back to synchronous poster generation")
+        # Redirect to synchronous endpoint
+        return generate_poster_sync()
 
     try:
         data = request.get_json()
@@ -761,15 +764,14 @@ def get_poster_status(job_id):
             response['error'] = job_data.get('error', 'Unknown error')
         
         return jsonify(response)
-        
     except Exception as e:
         logger.exception(f"Error checking job status: {e}")
         return jsonify({"error": str(e)}), 500
 
-# --- OLD SYNCHRONOUS POSTER GENERATION (KEPT AS BACKUP) ---
-@app.route('/generate_poster_sync', methods=['POST'])
+# --- SYNCHRONOUS POSTER GENERATION (FALLBACK) ---
 def generate_poster_sync():
-    """Generates a recipe poster using Gemini AI (New SDK) with Image Input - SYNCHRONOUS VERSION."""
+    """Generates a recipe poster using Gemini AI (New SDK) with Image Input - SYNCHRONOUS VERSION.
+    Can be called directly via /generate_poster_sync or as fallback when Redis unavailable."""
     # Note: We re-check API Key availability here because the global check was for the old SDK
     # But usually they use the same key.
     if not API_KEY: # Re-using the global API_KEY variable
