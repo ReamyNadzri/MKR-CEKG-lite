@@ -305,16 +305,35 @@ def get_available_classes_from_db():
         logger.error(f"DB error getting classes from MongoDB: {e}")
         return class_labels
 
-# --- Model & Utils (Unchanged) ---
+# --- Model & Utils (TensorFlow 2.20 Compatible) ---
 def load_trained_model():
     global model, model_loaded
     try:
         if os.path.exists(Config.MODEL_PATH):
-            model = load_model(Config.MODEL_PATH)
+            logger.info(f"Loading model from {Config.MODEL_PATH}")
+            # Try loading with compile=False for better TF 2.20 compatibility
+            try:
+                model = load_model(Config.MODEL_PATH, compile=False)
+                # Recompile with compatible optimizer
+                model.compile(
+                    optimizer='adam',
+                    loss='categorical_crossentropy',
+                    metrics=['accuracy']
+                )
+                logger.info("Model loaded successfully with recompilation")
+            except Exception as compile_error:
+                # Fallback to standard loading
+                logger.warning(f"Recompile approach failed: {compile_error}. Trying standard load...")
+                model = load_model(Config.MODEL_PATH)
+                logger.info("Model loaded with standard method")
+            
             model_loaded = True
-            logger.info("Model loaded.")
+            logger.info(f"Model loaded successfully. TensorFlow version: {tf.__version__}")
+        else:
+            logger.error(f"Model file not found at {Config.MODEL_PATH}")
     except Exception as e:
         logger.error(f"Model load failed: {e}")
+        logger.error(f"TensorFlow version: {tf.__version__}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in Config.ALLOWED_EXTENSIONS
