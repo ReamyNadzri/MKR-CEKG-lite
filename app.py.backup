@@ -24,17 +24,6 @@ try:
     MONGO_AVAILABLE = True
 except ImportError:
     MONGO_AVAILABLE = False
-
-# --- NEW: Redis Imports for Background Tasks ---
-try:
-    import redis
-    REDIS_AVAILABLE = True
-except ImportError:
-    REDIS_AVAILABLE = False
-    logger.warning("Redis not installed. Background poster generation will be disabled.")
-
-import threading
-import time
     
 # --- Logging (Moved up to be used by Config) ---
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(asctime)s:%(message)s')
@@ -86,10 +75,6 @@ RESEARCH_CLASSES = [
 client = None
 db = None
 db_connection_ok = False
-
-# --- NEW: Redis Globals ---
-redis_client = None
-redis_connection_ok = False
 
 # --- NEW: Gemini AI Configuration (Unchanged) ---
 try:
@@ -365,155 +350,9 @@ def predict_kuih(image_path):
         logger.error(f"Prediction failed: {e}")
         return "Prediction Error", 0.0
 
-# --- NEW: Redis Initialization ---
-def init_redis():
-    """Initializes the Redis client for job queue."""
-    global redis_client, redis_connection_ok
-    if not REDIS_AVAILABLE:
-        logger.warning("Redis not available. Poster generation will run synchronously (may timeout on Railway).")
-        return
-    
-    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-    try:
-        redis_client = redis.from_url(redis_url, decode_responses=True)
-        redis_client.ping()
-        redis_connection_ok = True
-        logger.info(f"Redis connection successful: {redis_url}")
-    except Exception as e:
-        logger.error(f"Redis connection failed: {e}")
-        redis_connection_ok = False
-        redis_client = None
-
-# --- NEW: Background Worker for Poster Generation ---
-def process_poster_jobs():
-    """Background worker that processes poster generation jobs."""
-    if not redis_connection_ok:
-        return
-    
-    logger.info("Poster job worker started")
-    while True:
-        try:
-            # Get all job keys
-            job_keys = redis_client.keys("poster_job:*")
-            
-            for job_key in job_keys:
-                job_data = redis_client.hgetall(job_key)
-                
-                if job_data.get('status') == 'PENDING':
-                    job_id = job_key.split(':')[1]
-                    logger.info(f"Processing job {job_id}")
-                    
-                    # Update status to PROCESSING
-                    redis_client.hset(job_key, 'status', 'PROCESSING')
-                    
-                    try:
-                        # Perform the actual poster generation
-                        kuih_name = job_data.get('kuih_name')
-                        image_filename = job_data.get('image_filename')
-                        calories = job_data.get('calories', 'N/A')
-                        
-                        # Resolve image path
-                        image_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(image_filename))
-                        
-                        if not os.path.exists(image_path):
-                            raise Exception("Image file not found")
-                        
-                        # Call Gemini API
-                        client_gemini = genai_new.Client(api_key=API_KEY)
-                        
-                        prompt = f"""
-                        Ultra-clean modern recipe infographic. Showcase {kuih_name} in a visually appealing finished form—sliced, plated, or
-portioned—floating slightly in perspective or angled view. Arrange ingredients,
-steps, and tips around the dish in a dynamic editorial layout, not restricted
-to top-down. Ingredients Section: Include icons or mini illustrations for each
-ingredient with quantities. Arrange them in clusters, lists, or circular flows
-connected visually to the dish. Steps Section: Show preparation steps with
-numbered panels, arrows, or lines, forming a logical flow around the main dish.
-Include small cooking icons (knife, pan, oven, timer) where helpful. Additional
-Info (optional): Total calories, prep/cook time, servings, spice
-level—displayed as clean bubbles or badges near the dish. Visual Style:
-Editorial infographic meets lifestyle food photography. Vibrant, natural food
-colors, subtle drop shadows, clean vector icons, modern typography, soft
-gradients or glassmorphism for step panels. Accent colors can highlight key
-info (calories: {calories}, prep time). Composition Guidelines: Finished meal as hero
-visual (perspective or angled) Ingredients and steps flow dynamically around
-the dish Clear visual hierarchy: dish > steps > ingredients > optional
-stats Enough negative space to keep design airy and readable Lighting &
-Background: Soft, natural studio lighting, minimal textured or gradient
-background for premium editorial feel. Output: 1080×1080, ultra-crisp,
-social-feed optimized, no watermark.`
-                        """
-                        
-                        response = client_gemini.models.generate_content(
-                            model="gemini-3-pro-image-preview",
-                            contents=[
-                                prompt,
-                                PIL.Image.open(image_path),
-                            ],
-                            config=genai_new.types.GenerateContentConfig(
-                                response_modalities=['IMAGE'],
-                                image_config=genai_new.types.ImageConfig(
-                                    aspect_ratio="1:1",
-                                    image_size="2K"
-                                ),
-                            )
-                        )
-                        
-                        # Extract image from response
-                        image_base64 = None
-                        for part in response.parts:
-                            if hasattr(part, 'inline_data') and part.inline_data:
-                                import base64
-                                raw_data = part.inline_data.data
-                                image_base64 = base64.b64encode(raw_data).decode('utf-8')
-                                mime_type = part.inline_data.mime_type or "image/png"
-                                image_base64 = f"data:{mime_type};base64,{image_base64}"
-                                break
-                            
-                            if hasattr(part, 'as_image'):
-                                try:
-                                    img = part.as_image()
-                                    if img:
-                                        import io
-                                        import base64
-                                        buffered = io.BytesIO()
-                                        img.save(buffered, format="PNG")
-                                        img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-                                        image_base64 = f"data:image/png;base64,{img_str}"
-                                        break
-                                except:
-                                    pass
-                        
-                        if image_base64:
-                            # Success - update job with result
-                            redis_client.hset(job_key, 'status', 'COMPLETED')
-                            redis_client.hset(job_key, 'result', json.dumps({"image_base64": image_base64}))
-                            logger.info(f"Job {job_id} completed successfully")
-                        else:
-                            raise Exception("No image generated by AI")
-                        
-                    except Exception as e:
-                        logger.error(f"Job {job_id} failed: {e}")
-                        redis_client.hset(job_key, 'status', 'FAILED')
-                        redis_client.hset(job_key, 'error', str(e))
-            
-            # Sleep between polls
-            time.sleep(2)
-            
-        except Exception as e:
-            logger.error(f"Worker error: {e}")
-            time.sleep(5)
-
 # --- Initialization ---
 init_db() # <-- Initialize DB connection on startup
-init_redis() # <-- Initialize Redis connection
 load_trained_model()
-
-# Start background worker if Redis is available
-if redis_connection_ok:
-    worker_thread = threading.Thread(target=process_poster_jobs, daemon=True)
-    worker_thread.start()
-    logger.info("Background poster worker thread started")
 
 # --- Routes (Unchanged) ---
 @app.route('/')
@@ -687,89 +526,7 @@ def get_gemini_info():
 
 @app.route('/generate_poster', methods=['POST'])
 def generate_poster():
-    """Creates a background job for poster generation and returns job_id immediately."""
-    if not API_KEY:
-        return jsonify({"error": "AI service is not configured."}), 503
-    
-    # If Redis is not available, fallback to synchronous (will timeout on Railway)
-    if not redis_connection_ok:
-        return jsonify({"error": "Background job system not available. Please contact administrator."}), 503
-
-    try:
-        data = request.get_json()
-        kuih_name = data.get('kuih')
-        image_filename = data.get('image_filename')
-        calories = data.get('calories', 'N/A')
-
-        if not kuih_name:
-            return jsonify({"error": "No kuih name provided."}), 400
-        
-        # Verify image exists
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(image_filename)) if image_filename else None
-        if not image_path or not os.path.exists(image_path):
-            return jsonify({"error": "Original image not found for poster generation."}), 400
-
-        # Create job in Redis
-        job_id = uuid.uuid4().hex
-        job_key = f"poster_job:{job_id}"
-        
-        job_data = {
-            'job_id': job_id,
-            'status': 'PENDING',
-            'kuih_name': kuih_name,
-            'image_filename': image_filename,
-            'calories': calories,
-            'created_at': datetime.now().isoformat()
-        }
-        
-        redis_client.hmset(job_key, job_data)
-        redis_client.expire(job_key, 3600)  # Expire after 1 hour
-        
-        logger.info(f"Created poster generation job {job_id} for {kuih_name}")
-        return jsonify({"success": True, "job_id": job_id})
-        
-    except Exception as e:
-        logger.exception(f"Error creating poster job: {e}")
-        return jsonify({"error": f"Failed to create job: {str(e)}"}), 500
-
-@app.route('/poster_status/<job_id>', methods=['GET'])
-def get_poster_status(job_id):
-    """Checks the status of a poster generation job."""
-    if not redis_connection_ok:
-        return jsonify({"error": "Job system not available"}), 503
-    
-    try:
-        job_key = f"poster_job:{job_id}"
-        job_data = redis_client.hgetall(job_key)
-        
-        if not job_data:
-            return jsonify({"error": "Job not found"}), 404
-        
-        status = job_data.get('status')
-        
-        response = {
-            'job_id': job_id,
-            'status': status
-        }
-        
-        if status == 'COMPLETED':
-            result_json = job_data.get('result')
-            if result_json:
-                result = json.loads(result_json)
-                response['result'] = result
-        elif status == 'FAILED':
-            response['error'] = job_data.get('error', 'Unknown error')
-        
-        return jsonify(response)
-        
-    except Exception as e:
-        logger.exception(f"Error checking job status: {e}")
-        return jsonify({"error": str(e)}), 500
-
-# --- OLD SYNCHRONOUS POSTER GENERATION (KEPT AS BACKUP) ---
-@app.route('/generate_poster_sync', methods=['POST'])
-def generate_poster_sync():
-    """Generates a recipe poster using Gemini AI (New SDK) with Image Input - SYNCHRONOUS VERSION."""
+    """Generates a recipe poster using Gemini AI (New SDK) with Image Input."""
     # Note: We re-check API Key availability here because the global check was for the old SDK
     # But usually they use the same key.
     if not API_KEY: # Re-using the global API_KEY variable
@@ -794,7 +551,7 @@ def generate_poster_sync():
         if not image_path or not os.path.exists(image_path):
              return jsonify({"error": "Original image not found for poster generation."}), 400
 
-        logger.info(f"Generating poster SYNCHRONOUSLY for: {kuih_name} using image: {image_filename}")
+        logger.info(f"Generating poster for: {kuih_name} using image: {image_filename}")
 
         # --- Initialize Client (New SDK) ---
         client = genai_new.Client(api_key=API_KEY)
