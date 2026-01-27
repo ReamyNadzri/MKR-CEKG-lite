@@ -946,7 +946,7 @@ def unlock_poster():
     if success:
         return jsonify({
             "success": True,
-            "message": "Unlock successful! You now have unlimited poster generations for 24 hours."
+            "message": "Unlock successful! You have 2 more poster generations."
         })
     else:
         return jsonify({
