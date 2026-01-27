@@ -720,7 +720,7 @@
                 const res = await fetch('/unlock_poster', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code })
+                    body: JSON.stringify({ code: code.toUpperCase() })
                 });
                 const data = await res.json();
 
