@@ -91,6 +91,11 @@ db_connection_ok = False
 redis_client = None
 redis_connection_ok = False
 
+# --- NEW: Poster Generation Quota Configuration ---
+POSTER_QUOTA_LIMIT = 2  # Number of posters allowed per time window
+POSTER_QUOTA_WINDOW = 10800  # 3 hours in seconds (3 * 60 * 60)
+POSTER_UNLOCK_CODE = "CSP650"  # Unlock code to bypass quota
+
 # --- NEW: Gemini AI Configuration (Unchanged) ---
 try:
     API_KEY = os.getenv("GEMINI_API_KEY")
@@ -383,6 +388,105 @@ def init_redis():
         logger.error(f"Redis connection failed: {e}")
         redis_connection_ok = False
         redis_client = None
+
+# --- NEW: Poster Quota Management Functions ---
+def get_user_ip():
+    """Get the user's IP address from the request."""
+    if request.headers.get('X-Forwarded-For'):
+        return request.headers.get('X-Forwarded-For').split(',')[0]
+    return request.remote_addr
+
+def get_poster_quota_status(ip_address):
+    """
+    Check poster generation quota for an IP address.
+    Returns: dict with 'allowed', 'remaining', 'unlocked', 'reset_time'
+    """
+    if not redis_connection_ok:
+        # Fallback: allow without quota if Redis unavailable
+        return {'allowed': True, 'remaining': POSTER_QUOTA_LIMIT, 'unlocked': False, 'reset_time': None}
+    
+    quota_key = f"poster_quota:{ip_address}"
+    quota_data = redis_client.hgetall(quota_key)
+    
+    if not quota_data:
+        # No quota record - user hasn't generated yet
+        return {'allowed': True, 'remaining': POSTER_QUOTA_LIMIT, 'unlocked': False, 'reset_time': None}
+    
+    # Check if unlocked
+    if quota_data.get('unlocked') == 'true':
+        return {'allowed': True, 'remaining': 999, 'unlocked': True, 'reset_time': None}
+    
+    # Check remaining count
+    count = int(quota_data.get('count', 0))
+    remaining = POSTER_QUOTA_LIMIT - count
+    
+    if remaining > 0:
+        expires_at = quota_data.get('expires_at')
+        return {'allowed': True, 'remaining': remaining, 'unlocked': False, 'reset_time': expires_at}
+    else:
+        # Quota exhausted
+        expires_at = quota_data.get('expires_at')
+        return {'allowed': False, 'remaining': 0, 'unlocked': False, 'reset_time': expires_at}
+
+def use_poster_quota(ip_address):
+    """
+    Increment the poster generation count for an IP address.
+    Returns: True if quota used successfully, False if quota exceeded
+    """
+    if not redis_connection_ok:
+        return True  # Allow if Redis unavailable
+    
+    quota_key = f"poster_quota:{ip_address}"
+    quota_data = redis_client.hgetall(quota_key)
+    
+    # Check if unlocked
+    if quota_data and quota_data.get('unlocked') == 'true':
+        return True  # Unlimited access
+    
+    if not quota_data:
+        # First use - create quota record
+        now = datetime.now()
+        expires_at = now + timedelta(seconds=POSTER_QUOTA_WINDOW)
+        redis_client.hmset(quota_key, {
+            'count': 1,
+            'unlocked': 'false',
+            'first_use': now.isoformat(),
+            'expires_at': expires_at.isoformat()
+        })
+        redis_client.expire(quota_key, POSTER_QUOTA_WINDOW)
+        return True
+    
+    # Increment count
+    count = int(quota_data.get('count', 0))
+    if count >= POSTER_QUOTA_LIMIT:
+        return False  # Quota exceeded
+    
+    redis_client.hincrby(quota_key, 'count', 1)
+    return True
+
+def unlock_poster_quota(ip_address, unlock_code):
+    """
+    Unlock unlimited poster generation for an IP address.
+    Returns: True if unlock successful, False if code invalid
+    """
+    if unlock_code != POSTER_UNLOCK_CODE:
+        return False
+    
+    if not redis_connection_ok:
+        logger.warning("Cannot unlock quota - Redis not available")
+        return False
+    
+    quota_key = f"poster_quota:{ip_address}"
+    # Set unlocked flag (expires after 24 hours)
+    redis_client.hmset(quota_key, {
+        'count': 0,
+        'unlocked': 'true',
+        'unlocked_at': datetime.now().isoformat()
+    })
+    redis_client.expire(quota_key, 86400)  # 24 hours
+    logger.info(f"Poster quota unlocked for IP: {ip_address}")
+    return True
+
 
 # --- NEW: Background Worker for Poster Generation ---
 def process_poster_jobs():
@@ -692,6 +796,32 @@ def generate_poster():
     if not API_KEY:
         return jsonify({"error": "AI service is not configured."}), 503
     
+    # --- QUOTA CHECK ---
+    user_ip = get_user_ip()
+    quota_status = get_poster_quota_status(user_ip)
+    
+    if not quota_status['allowed']:
+        reset_time = quota_status.get('reset_time')
+        if reset_time:
+            try:
+                reset_dt = datetime.fromisoformat(reset_time)
+                time_left = reset_dt - datetime.now()
+                minutes_left = int(time_left.total_seconds() / 60)
+                hours = minutes_left // 60
+                mins = minutes_left % 60
+                time_msg = f"{hours}h {mins}m" if hours > 0 else f"{mins} minutes"
+            except:
+                time_msg = "a while"
+        else:
+            time_msg = "3 hours"
+        
+        return jsonify({
+            "error": f"Poster generation limit reached ({POSTER_QUOTA_LIMIT} per 3 hours). Try again in {time_msg} or unlock with code CSP650.",
+            "quota_exceeded": True,
+            "remaining": 0,
+            "reset_time": reset_time
+        }), 429
+    
     # If Redis is not available, fallback to synchronous mode
     if not redis_connection_ok:
         logger.warning("Redis not available, falling back to synchronous poster generation")
@@ -728,8 +858,11 @@ def generate_poster():
         redis_client.hmset(job_key, job_data)
         redis_client.expire(job_key, 3600)  # Expire after 1 hour
         
+        # Use quota for this generation
+        use_poster_quota(user_ip)
+        
         logger.info(f"Created poster generation job {job_id} for {kuih_name}")
-        return jsonify({"success": True, "job_id": job_id})
+        return jsonify({"success": True, "job_id": job_id, "remaining": quota_status['remaining'] - 1})
         
     except Exception as e:
         logger.exception(f"Error creating poster job: {e}")
@@ -757,9 +890,20 @@ def get_poster_status(job_id):
         
         if status == 'COMPLETED':
             result_json = job_data.get('result')
+            logger.info(f"Job {job_id} completed. Result field exists: {result_json is not None}")
             if result_json:
-                result = json.loads(result_json)
-                response['result'] = result
+                try:
+                    result = json.loads(result_json)
+                    logger.info(f"Result parsed. Has image_base64: {'image_base64' in result}")
+                    if 'image_base64' in result:
+                        img_size = len(result['image_base64'])
+                        logger.info(f"Image base64 size: {img_size} bytes")
+                    response['result'] = result
+                except json.JSONDecodeError as je:
+                    logger.error(f"Failed to parse result JSON: {je}")
+                    response['result'] = {}
+            else:
+                logger.warning(f"Job {job_id} marked COMPLETED but no result field in Redis")
         elif status == 'FAILED':
             response['error'] = job_data.get('error', 'Unknown error')
         
@@ -767,6 +911,38 @@ def get_poster_status(job_id):
     except Exception as e:
         logger.exception(f"Error checking job status: {e}")
         return jsonify({"error": str(e)}), 500
+
+# --- NEW: Poster Quota Endpoints ---
+@app.route('/poster_quota', methods=['GET'])
+def get_quota():
+    """Returns the current poster generation quota status for the user."""
+    user_ip = get_user_ip()
+    quota_status = get_poster_quota_status(user_ip)
+    return jsonify(quota_status)
+
+@app.route('/unlock_poster', methods=['POST'])
+def unlock_poster():
+    """Unlocks unlimited poster generation with the correct code."""
+    data = request.get_json()
+    unlock_code = data.get('code', '').strip()
+    
+    if not unlock_code:
+        return jsonify({"success": False, "error": "No unlock code provided"}), 400
+    
+    user_ip = get_user_ip()
+    success = unlock_poster_quota(user_ip, unlock_code)
+    
+    if success:
+        return jsonify({
+            "success": True,
+            "message": "Unlock successful! You now have unlimited poster generations for 24 hours."
+        })
+    else:
+        return jsonify({
+            "success": False,
+            "error": "Invalid unlock code. Please try again."
+        }), 403
+
 
 # --- SYNCHRONOUS POSTER GENERATION (FALLBACK) ---
 def generate_poster_sync():
@@ -803,7 +979,8 @@ def generate_poster_sync():
 
         # --- Construct the Prompt ---
         prompt = f"""
-        Ultra-clean modern recipe infographic. Showcase {kuih_name} in a visually appealing finished form—sliced, plated, or
+        Ultra-clean modern recipe infographic. Showcase {kuih_name} in a visually appealing finished
+        form—sliced, plated, or
 portioned—floating slightly in perspective or angled view. Arrange ingredients,
 steps, and tips around the dish in a dynamic editorial layout, not restricted
 to top-down. Ingredients Section: Include icons or mini illustrations for each

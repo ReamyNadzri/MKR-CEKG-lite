@@ -369,6 +369,24 @@
                                 </p>
                             </div>
 
+                            <!-- NEW: Quota Status Display -->
+                            <div id="poster-quota-display"
+                                class="hidden mb-3 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
+                                <div class="flex items-center justify-between mb-1">
+                                    <p class="text-xs font-bold text-slate-700">
+                                        <i class="fa-solid fa-palette mr-1 text-indigo-500"></i> Poster Generation
+                                    </p>
+                                    <span id="quota-remaining"
+                                        class="px-2 py-0.5 bg-white text-slate-700 text-[10px] font-bold rounded-full border border-slate-200">2/2
+                                        remaining</span>
+                                </div>
+                                <p id="quota-reset-time" class="text-[10px] text-slate-500"></p>
+                                <button onclick="showUnlockModal()"
+                                    class="mt-2 text-[10px] text-indigo-600 font-semibold hover:underline">
+                                    <i class="fa-solid fa-unlock-keyhole mr-1"></i> Unlock Unlimited Access
+                                </button>
+                            </div>
+
                             <button id="btn-generate-poster" onclick="generatePoster()"
                                 class="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-paintbrush"></i> Generate AI Recipe Poster
@@ -576,6 +594,8 @@
                 const kuihName = hidden.getAttribute('data-kuih');
                 if (kuihName) {
                     loadGemini(kuihName);
+                    // Fetch poster quota status
+                    fetchQuotaStatus();
                     if (window.innerWidth < 1024) hidden.parentElement.scrollIntoView({ behavior: 'smooth' });
                 }
             }
@@ -602,6 +622,125 @@
                 content.classList.add('animate-fade-in');
             } catch (e) {
                 loader.innerHTML = `<div class="text-amber-600 text-sm bg-amber-50 p-3 rounded-lg"><i class="fa-solid fa-triangle-exclamation mr-2"></i>AI insights unavailable: ${e.message}</div>`;
+            }
+        }
+
+        // --- NEW: Poster Quota Management Functions ---
+        let quotaData = null;
+
+        async function fetchQuotaStatus() {
+            try {
+                const res = await fetch('/poster_quota');
+                const data = await res.json();
+                quotaData = data;
+                updateQuotaDisplay();
+            } catch (e) {
+                console.error('Failed to fetch quota:', e);
+            }
+        }
+
+        function updateQuotaDisplay() {
+            const display = document.getElementById('poster-quota-display');
+            const remaining = document.getElementById('quota-remaining');
+            const resetTime = document.getElementById('quota-reset-time');
+            const btn = document.getElementById('btn-generate-poster');
+
+            if (!quotaData) return;
+
+            display.classList.remove('hidden');
+
+            if (quotaData.unlocked) {
+                remaining.textContent = '∞ unlimited';
+                remaining.classList.add('bg-green-100', 'text-green-700', 'border-green-300');
+                resetTime.textContent = '✨ Unlocked for 24 hours';
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                const count = quotaData.remaining || 0;
+                remaining.textContent = `${count}/2 remaining`;
+
+                if (count === 0) {
+                    remaining.classList.add('bg-red-100', 'text-red-700', 'border-red-300');
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                    if (quotaData.reset_time) {
+                        try {
+                            const resetDt = new Date(quotaData.reset_time);
+                            const now = new Date();
+                            const diff = resetDt - now;
+                            const minutes = Math.floor(diff / 60000);
+                            const hours = Math.floor(minutes / 60);
+                            const mins = minutes % 60;
+                            resetTime.textContent = `Resets in ${hours > 0 ? hours + 'h ' : ''}${mins}m`;
+                        } catch {
+                            resetTime.textContent = 'Resets in ~3 hours';
+                        }
+                    } else {
+                        resetTime.textContent = 'Limit reached';
+                    }
+                } else {
+                    remaining.classList.add('bg-white', 'text-slate-700', 'border-slate-200');
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    resetTime.textContent = count === 1 ? '⚠️ Last poster remaining!' : '';
+                }
+            }
+        }
+
+        function showUnlockModal() {
+            document.getElementById('unlock-modal').classList.remove('hidden');
+            document.getElementById('unlock-code-input').value = '';
+            document.getElementById('unlock-error').classList.add('hidden');
+            document.getElementById('unlock-success').classList.add('hidden');
+        }
+
+        function hideUnlockModal(event) {
+            if (!event || event.target.id === 'unlock-modal') {
+                document.getElementById('unlock-modal').classList.add('hidden');
+            }
+        }
+
+        async function unlockPosterQuota() {
+            const input = document.getElementById('unlock-code-input');
+            const errorDiv = document.getElementById('unlock-error');
+            const successDiv = document.getElementById('unlock-success');
+            const code = input.value.trim();
+
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+
+            if (!code) {
+                errorDiv.textContent = 'Please enter an unlock code';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const res = await fetch('/unlock_poster', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    successDiv.textContent = data.message;
+                    successDiv.classList.remove('hidden');
+
+                    // Refresh quota display
+                    await fetchQuotaStatus();
+
+                    setTimeout(() => {
+                        hideUnlockModal();
+                    }, 1500);
+                } else {
+                    errorDiv.textContent = data.error || 'Invalid unlock code';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (e) {
+                errorDiv.textContent = 'Failed to unlock: ' + e.message;
+                errorDiv.classList.remove('hidden');
             }
         }
 
@@ -639,11 +778,23 @@
                 });
                 const createData = await createRes.json();
 
-                if (!createData.success || !createData.job_id) {
-                    throw new Error(createData.error || "Failed to create poster job");
+                if (createData.quota_exceeded) {
+                    // Quota limit reached
+                    throw new Error(createData.error || 'Poster generation limit reached');
+                }
+
+                if (!createData.job_id) {
+                    throw new Error(createData.error || 'Failed to create poster generation job');
                 }
 
                 const jobId = createData.job_id;
+
+                // Update quota display
+                if (createData.remaining !== undefined) {
+                    quotaData.remaining = createData.remaining;
+                    updateQuotaDisplay();
+                }
+
                 console.log(`Poster job created: ${jobId}`);
 
                 // Update loader text
@@ -760,6 +911,41 @@
             });
         }
     </script>
+
+    <!-- NEW: Unlock Code Modal -->
+    <div id="unlock-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        onclick="hideUnlockModal(event)">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md mx-4" onclick="event.stopPropagation()">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                    <i class="fa-solid fa-unlock-keyhole"></i>
+                </div>
+                <h3 class="font-serif text-xl font-bold text-slate-800">Unlock Poster Generation</h3>
+            </div>
+
+            <p class="text-sm text-slate-600 mb-4">
+                Enter the unlock code to get unlimited poster generations for 24 hours.
+            </p>
+
+            <input id="unlock-code-input" type="text" placeholder="Enter unlock code"
+                class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-500 focus:outline-none mb-3 font-mono uppercase"
+                onkeypress="if(event.key==='Enter') unlockPosterQuota()">
+
+            <div id="unlock-error" class="hidden text-sm text-red-600 mb-3"></div>
+            <div id="unlock-success" class="hidden text-sm text-green-600 mb-3"></div>
+
+            <div class="flex gap-3">
+                <button onclick="hideUnlockModal()"
+                    class="flex-1 px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition">
+                    Cancel
+                </button>
+                <button onclick="unlockPosterQuota()"
+                    class="flex-1 px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold hover:shadow-lg transition">
+                    <i class="fa-solid fa-check mr-1"></i> Unlock
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
