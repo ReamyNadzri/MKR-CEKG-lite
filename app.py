@@ -9,7 +9,7 @@ import numpy as np
 import os
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 import shutil
 import json
 import google.generativeai as genai
@@ -466,7 +466,7 @@ def use_poster_quota(ip_address):
 
 def unlock_poster_quota(ip_address, unlock_code):
     """
-    Unlock unlimited poster generation for an IP address.
+    Unlock 2 more poster generations for an IP address.
     Returns: True if unlock successful, False if code invalid
     """
     if unlock_code != POSTER_UNLOCK_CODE:
@@ -477,14 +477,25 @@ def unlock_poster_quota(ip_address, unlock_code):
         return False
     
     quota_key = f"poster_quota:{ip_address}"
-    # Set unlocked flag (expires after 24 hours)
-    redis_client.hmset(quota_key, {
-        'count': 0,
-        'unlocked': 'true',
-        'unlocked_at': datetime.now().isoformat()
-    })
-    redis_client.expire(quota_key, 86400)  # 24 hours
-    logger.info(f"Poster quota unlocked for IP: {ip_address}")
+    quota_data = redis_client.hgetall(quota_key)
+    
+    if not quota_data:
+        # No quota record - create fresh one with 2 uses
+        now = datetime.now()
+        expires_at = now + timedelta(seconds=POSTER_QUOTA_WINDOW)
+        redis_client.hmset(quota_key, {
+            'count': 0,
+            'unlocked': 'false',
+            'first_use': now.isoformat(),
+            'expires_at': expires_at.isoformat()
+        })
+        redis_client.expire(quota_key, POSTER_QUOTA_WINDOW)
+    else:
+        # Reset count to 0 (gives 2 more uses)
+        current_count = int(quota_data.get('count', 0))
+        redis_client.hset(quota_key, 'count', 0)
+        logger.info(f"Poster quota unlocked for IP: {ip_address} - reset from {current_count} to 0")
+    
     return True
 
 
