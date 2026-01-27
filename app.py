@@ -827,7 +827,7 @@ def generate_poster():
             time_msg = "3 hours"
         
         return jsonify({
-            "error": f"Poster generation limit reached ({POSTER_QUOTA_LIMIT} per 3 hours). Try again in {time_msg} or unlock with code CSP650.",
+            "error": f"Poster generation limit reached ({POSTER_QUOTA_LIMIT} per 3 hours). Try again in {time_msg}.",
             "quota_exceeded": True,
             "remaining": 0,
             "reset_time": reset_time
