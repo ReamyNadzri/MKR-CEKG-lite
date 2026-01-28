@@ -29,6 +29,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py .
 COPY kuih_recognition_model.keras .
 COPY templates ./templates
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+
+# Make entrypoint script executable
+RUN chmod +x /docker-entrypoint.sh
 
 # Copy React build from frontend stage
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
@@ -42,4 +46,5 @@ ENV PORT=8080
 # Expose port
 EXPOSE 8080
 
-# Railway will use the Procfile for the start command
+# Use entrypoint script
+ENTRYPOINT ["/docker-entrypoint.sh"]
