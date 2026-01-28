@@ -28,14 +28,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy Flask app
 COPY app.py .
 COPY kuih_recognition_model.keras .
-COPY templates/ ./templates/
-COPY static/ ./static/
+COPY templates ./templates
 
 # Copy React build from frontend stage
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
 # Create uploads and feedback directories
-RUN mkdir -p uploads feedback
+RUN mkdir -p uploads feedback_images
 
 # Expose port (Railway will use $PORT)
 EXPOSE 8080
