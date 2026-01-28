@@ -69,15 +69,15 @@ app.config.from_object(Config)
 
 # Enable CORS for React frontend
 CORS(app, resources={
-    r"/api/*": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/predict": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/gemini-info": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/generate_poster": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/poster_status/*": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/poster_quota": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/unlock_poster": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/submit_feedback": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/uploads/*": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
+    r"/api/*": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176", "*"]},
+    r"/predict": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176", "*"]},
+    r"/gemini-info": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176", "*"]},
+    r"/generate_poster": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176", "*"]},
+    r"/poster_status/*": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176", "*"]},
+    r"/poster_quota": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176", "*"]},
+    r"/unlock_poster": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176", "*"]},
+    r"/submit_feedback": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176", "*"]},
+    r"/uploads/*": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176", "*"]},
 })
 
 
@@ -107,9 +107,9 @@ redis_client = None
 redis_connection_ok = False
 
 # --- NEW: Poster Generation Quota Configuration ---
-POSTER_QUOTA_LIMIT = 2  # Number of posters allowed per time window
-POSTER_QUOTA_WINDOW = 43200  # 12 hours in seconds (12 * 60 * 60)
-POSTER_UNLOCK_CODE = "CSP650FYP"  # Unlock code to bypass quota
+POSTER_QUOTA_LIMIT = 1  # Number of posters allowed (1 = once per user)
+POSTER_QUOTA_WINDOW = 31536000  # Effectively permanent (1 year in seconds)
+POSTER_UNLOCK_CODE = "CSP650FYP"  # Unlock code to reset quota permanently
 
 # --- NEW: Gemini AI Configuration (Unchanged) ---
 try:
@@ -1302,6 +1302,20 @@ def delete_history_item(id):
     except Exception as e:
         logger.error(f"Delete error: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
+
+# --- Serve React Static Files (for Railway Production) ---
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react(path):
+    """Serve React frontend for production"""
+    dist_dir = os.path.join(os.path.dirname(__file__), 'frontend', 'dist')
+    
+    # If path is a file in dist, serve it
+    if path and os.path.exists(os.path.join(dist_dir, path)):
+        return send_from_directory(dist_dir, path)
+    
+    # Otherwise, serve index.html for client-side routing
+    return send_from_directory(dist_dir, 'index.html')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
