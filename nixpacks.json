@@ -5,7 +5,7 @@
                 "nodejs",
                 "python39",
                 "gcc",
-                "pkgconfig",
+                "pkg-config",
                 "cairo",
                 "pango",
                 "freetype",
