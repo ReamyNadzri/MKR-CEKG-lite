@@ -39,5 +39,5 @@ RUN mkdir -p uploads feedback_images
 # Expose port (Railway will use $PORT)
 EXPOSE 8080
 
-# Start gunicorn
-CMD gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 app:app
+# Start gunicorn (use shell form to expand $PORT)
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 app:app"]
