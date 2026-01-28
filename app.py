@@ -1310,12 +1310,27 @@ def serve_react(path):
     """Serve React frontend for production"""
     dist_dir = os.path.join(os.path.dirname(__file__), 'frontend', 'dist')
     
+    # Log for debugging
+    logger.info(f"Serving request for path: {path}, dist_dir: {dist_dir}")
+    
+    # Check if dist directory exists
+    if not os.path.exists(dist_dir):
+        logger.error(f"dist directory not found: {dist_dir}")
+        return "React build not found. Please build the frontend first.", 404
+    
     # If path is a file in dist, serve it
     if path and os.path.exists(os.path.join(dist_dir, path)):
+        logger.info(f"Serving file: {path}")
         return send_from_directory(dist_dir, path)
     
     # Otherwise, serve index.html for client-side routing
-    return send_from_directory(dist_dir, 'index.html')
+    index_path = os.path.join(dist_dir, 'index.html')
+    if os.path.exists(index_path):
+        logger.info(f"Serving index.html for path: {path}")
+        return send_from_directory(dist_dir, 'index.html')
+    else:
+        logger.error(f"index.html not found at: {index_path}")
+        return "index.html not found", 404
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
