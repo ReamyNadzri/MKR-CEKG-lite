@@ -36,8 +36,10 @@ COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 # Create uploads and feedback directories
 RUN mkdir -p uploads feedback_images
 
-# Expose port (Railway will use $PORT)
+# Set default port (Railway will override with $PORT env var)
+ENV PORT=8080
+
+# Expose port
 EXPOSE 8080
 
-# Start gunicorn (use shell form to expand $PORT)
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 app:app"]
+# Railway will use the Procfile for the start command
