@@ -1,2 +1,0 @@
-# Don't use railway.toml when Dockerfile exists
-# Railway will auto-detect and use the Dockerfile
