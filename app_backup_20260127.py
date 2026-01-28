@@ -1,7 +1,6 @@
 # app.py (Consolidated Version with Gemini AI + History + Calculator + MONGODB ATLAS)
 
 from flask import Flask, render_template, request, jsonify, send_from_directory, url_for
-from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import tensorflow as tf
 from tensorflow.keras.models import load_model
@@ -67,20 +66,6 @@ class Config:
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Enable CORS for React frontend
-CORS(app, resources={
-    r"/api/*": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/predict": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/gemini-info": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/generate_poster": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/poster_status/*": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/poster_quota": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/unlock_poster": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/submit_feedback": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-    r"/uploads/*": {"origins": ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:5175", "http://localhost:5176"]},
-})
-
-
 os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(Config.FEEDBACK_FOLDER, exist_ok=True)
 
@@ -108,8 +93,8 @@ redis_connection_ok = False
 
 # --- NEW: Poster Generation Quota Configuration ---
 POSTER_QUOTA_LIMIT = 2  # Number of posters allowed per time window
-POSTER_QUOTA_WINDOW = 43200  # 12 hours in seconds (12 * 60 * 60)
-POSTER_UNLOCK_CODE = "CSP650FYP"  # Unlock code to bypass quota
+POSTER_QUOTA_WINDOW = 10800  # 3 hours in seconds (3 * 60 * 60)
+POSTER_UNLOCK_CODE = "CSP650"  # Unlock code to bypass quota
 
 # --- NEW: Gemini AI Configuration (Unchanged) ---
 try:
@@ -411,37 +396,15 @@ def get_user_ip():
         return request.headers.get('X-Forwarded-For').split(',')[0]
     return request.remote_addr
 
-# --- In-Memory Quota Fallback (when Redis is down) ---
-MEMORY_QUOTA = {}
-
 def get_poster_quota_status(ip_address):
     """
     Check poster generation quota for an IP address.
     Returns: dict with 'allowed', 'remaining', 'unlocked', 'reset_time'
     """
     if not redis_connection_ok:
-        # Fallback: In-memory check
-        quota_data = MEMORY_QUOTA.get(ip_address)
-        if not quota_data:
-            return {'allowed': True, 'remaining': POSTER_QUOTA_LIMIT, 'unlocked': False, 'reset_time': None}
-        
-        now = datetime.now()
-        if now > quota_data['expires_at']:
-            # Expired, reset
-            return {'allowed': True, 'remaining': POSTER_QUOTA_LIMIT, 'unlocked': False, 'reset_time': None}
-            
-        if quota_data.get('unlocked'):
-            return {'allowed': True, 'remaining': 999, 'unlocked': True, 'reset_time': None}
-            
-        remaining = POSTER_QUOTA_LIMIT - quota_data['count']
-        return {
-            'allowed': remaining > 0,
-            'remaining': max(0, remaining),
-            'unlocked': False,
-            'reset_time': quota_data['expires_at'].isoformat()
-        }
+        # Fallback: allow without quota if Redis unavailable
+        return {'allowed': True, 'remaining': POSTER_QUOTA_LIMIT, 'unlocked': False, 'reset_time': None}
     
-    # Redis implementation
     quota_key = f"poster_quota:{ip_address}"
     quota_data = redis_client.hgetall(quota_key)
     
@@ -471,30 +434,8 @@ def use_poster_quota(ip_address):
     Returns: True if quota used successfully, False if quota exceeded
     """
     if not redis_connection_ok:
-        # Fallback: In-memory update
-        now = datetime.now()
-        quota_data = MEMORY_QUOTA.get(ip_address)
-        
-        if not quota_data or now > quota_data['expires_at']:
-            # Initialize or reset
-            expires_at = now + timedelta(seconds=POSTER_QUOTA_WINDOW)
-            MEMORY_QUOTA[ip_address] = {
-                'count': 1,
-                'unlocked': False,
-                'expires_at': expires_at
-            }
-            return True
-            
-        if quota_data.get('unlocked'):
-            return True
-            
-        if quota_data['count'] >= POSTER_QUOTA_LIMIT:
-            return False
-            
-        quota_data['count'] += 1
-        return True
+        return True  # Allow if Redis unavailable
     
-    # Redis implementation
     quota_key = f"poster_quota:{ip_address}"
     quota_data = redis_client.hgetall(quota_key)
     
@@ -525,41 +466,36 @@ def use_poster_quota(ip_address):
 
 def unlock_poster_quota(ip_address, unlock_code):
     """
-    Resets poster generation quota for an IP address (Refill to 2/2).
+    Unlock 2 more poster generations for an IP address.
     Returns: True if unlock successful, False if code invalid
     """
     if unlock_code != POSTER_UNLOCK_CODE:
         return False
     
     if not redis_connection_ok:
-        # Fallback: In-memory reset
+        logger.warning("Cannot unlock quota - Redis not available")
+        return False
+    
+    quota_key = f"poster_quota:{ip_address}"
+    quota_data = redis_client.hgetall(quota_key)
+    
+    if not quota_data:
+        # No quota record - create fresh one with 2 uses
         now = datetime.now()
         expires_at = now + timedelta(seconds=POSTER_QUOTA_WINDOW)
-        
-        # Reset count to 0, remove unlimited flag if present
-        MEMORY_QUOTA[ip_address] = {
+        redis_client.hmset(quota_key, {
             'count': 0,
-            'unlocked': False,
-            'expires_at': expires_at
-        }
-        return True
+            'unlocked': 'false',
+            'first_use': now.isoformat(),
+            'expires_at': expires_at.isoformat()
+        })
+        redis_client.expire(quota_key, POSTER_QUOTA_WINDOW)
+    else:
+        # Reset count to 0 (gives 2 more uses)
+        current_count = int(quota_data.get('count', 0))
+        redis_client.hset(quota_key, 'count', 0)
+        logger.info(f"Poster quota unlocked for IP: {ip_address} - reset from {current_count} to 0")
     
-    # Redis implementation
-    quota_key = f"poster_quota:{ip_address}"
-    
-    # Reset count to 0 and remove unlocked flag to ensure it's just a refill
-    # We also reset the expiration window to give them a fresh 3 hours (optional, but fair)
-    now = datetime.now()
-    expires_at = now + timedelta(seconds=POSTER_QUOTA_WINDOW)
-    
-    pipeline = redis_client.pipeline()
-    pipeline.hset(quota_key, 'count', 0)
-    pipeline.hdel(quota_key, 'unlocked') # Ensure we remove unlimited status if it existed
-    pipeline.hset(quota_key, 'expires_at', expires_at.isoformat())
-    pipeline.expire(quota_key, POSTER_QUOTA_WINDOW)
-    pipeline.execute()
-    
-    logger.info(f"Poster quota reset for IP: {ip_address}")
     return True
 
 
@@ -799,90 +735,8 @@ def handle_predict():
             return render_template('index.html', **render_args)
 
     except Exception as e:
-        logger.error(f"Prediction error: {e}")
-        if 'fpath' in locals() and os.path.exists(fpath): os.remove(fpath) # Clean up on error
-        return render_template('index.html', error=f"Unexpected error: {e}", **render_args), 500
-
-# NEW API endpoint for React frontend - returns JSON
-@app.route('/api/predict', methods=['POST'])
-def api_predict():
-    """JSON API endpoint for predictions - used by React frontend"""
-    if not model_loaded or not GEMINI_AVAILABLE:
-        return jsonify({'success': False, 'error': 'System error: Model or AI not configured'}), 503
-
-    file = request.files.get('file')
-    if not file or file.filename == '':
-        return jsonify({'success': False, 'error': 'No file selected'}), 400
-    if not allowed_file(file.filename):
-        return jsonify({'success': False, 'error': 'Invalid file type'}), 400
-
-    try:
-        # Save file
-        fname = f"{uuid.uuid4().hex[:8]}_{secure_filename(file.filename)}"
-        fpath = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-        file.save(fpath)
-
-        # Pre-analyze with Gemini Vision
-        ai_result = predict_with_gemini_vision(fpath, RESEARCH_CLASSES)
-
-        if "error" in ai_result:
-            return jsonify({'success': False, 'error': ai_result['error']}), 500
-
-        # Not a kuih
-        if not ai_result.get('is_kuih'):
-            if os.path.exists(fpath): os.remove(fpath)
-            return jsonify({'success': False, 'error': ai_result.get('reason', 'Not a kuih')}), 400
-
-        # Kuih outside research scope (AI prediction)
-        elif not ai_result.get('is_in_research_scope'):
-            kuih_name = ai_result.get('kuih_name', 'Unknown Kuih')
-            calories = ai_result.get('estimated_calories', 'N/A')
-            log_prediction_history(kuih_name, calories)
-
-            return jsonify({
-                'success': True,
-                'kuih_name': kuih_name,
-                'confidence': '100% (AI)',
-                'confidence_value': 1.0,
-                'image_path': fname,
-                'calories': calories,
-                'weight': 'N/A',
-                'is_gemini_prediction': True
-            })
-
-        # Kuih in research scope (CNN model)
-        else:
-            kuih_name, conf = predict_kuih(fpath)
-
-            if "Error" in kuih_name:
-                if os.path.exists(fpath): os.remove(fpath)
-                return jsonify({'success': False, 'error': kuih_name}), 500
-
-            details = get_kuih_details_from_db(kuih_name)
-            calories_to_log = details['calories'] if details else 'N/A'
-            log_prediction_history(kuih_name, calories_to_log)
-
-            response_data = {
-                'success': True,
-                'kuih_name': kuih_name,
-                'confidence': f"{conf*100:.2f}%",
-                'confidence_value': conf,
-                'image_path': fname,
-                'request_feedback': conf < Config.MIN_CONFIDENCE_THRESHOLD,
-                'is_gemini_prediction': False
-            }
-
-            if details:
-                response_data.update(details)
-            else:
-                response_data.update({'calories': 'N/A'})
-
-            return jsonify(response_data)
-
-    except Exception as e:
-        logger.error(f"API Prediction error: {e}")
-        if 'fpath' in locals() and os.path.exists(fpath): os.remove(fpath)
-        return jsonify({'success': False, 'error': f'Unexpected error: {str(e)}'}), 500
+        logger.error(f"Predict route error: {e}")
+        return render_template('index.html', error="Server error during prediction.", **render_args), 500
 
 @app.route('/submit_feedback', methods=['POST'])
 def handle_feedback():
@@ -982,8 +836,6 @@ def generate_poster():
     # If Redis is not available, fallback to synchronous mode
     if not redis_connection_ok:
         logger.warning("Redis not available, falling back to synchronous poster generation")
-        # Consume quota for synchronous generation
-        use_poster_quota(user_ip)
         # Redirect to synchronous endpoint
         return generate_poster_sync()
 
@@ -1251,21 +1103,8 @@ def system():
 def about():
     return render_template('about.html')
 
-@app.route('/api/history', methods=['GET', 'DELETE'])
-def api_history():
-    if request.method == 'DELETE':
-        if db_connection_ok:
-            try:
-                # Delete all records
-                db.prediction_history.delete_many({})
-                return jsonify({'success': True, 'message': 'History cleared'})
-            except Exception as e:
-                logger.error(f"Clear history error: {e}")
-                return jsonify({'success': False, 'message': str(e)}), 500
-        else:
-            return jsonify({'success': False, 'message': 'Database not connected'}), 500
-
-    # GET method logic
+@app.route('/api/history')
+def get_history():
     history_data = []
     if db_connection_ok:
         try:

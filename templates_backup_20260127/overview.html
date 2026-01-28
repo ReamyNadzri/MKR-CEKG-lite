@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Overview - Project Insight</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <nav class="sticky top-0 z-40 w-full glass-panel border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20 relative">
+                <a href="/" class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center text-white shadow-lg text-xl">🥟</div>
+                    <h1 class="font-bold text-lg leading-tight text-slate-900">Malaysian Kuih Recog.</h1>
+                </a>
+                <div class="hidden md:flex absolute left-1/2 transform -translate-x-1/2 items-center gap-1 p-1 bg-slate-100/80 rounded-full border border-slate-200">
+                    <a href="/overview" class="px-4 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-full shadow-sm">Overview</a>
+                    <a href="/system" class="px-4 py-1.5 text-xs font-semibold text-slate-600 rounded-full hover:bg-white hover:text-emerald-600 hover:shadow-sm transition-all">System</a>
+                    <a href="/about" class="px-4 py-1.5 text-xs font-semibold text-slate-600 rounded-full hover:bg-white hover:text-emerald-600 hover:shadow-sm transition-all">About</a>
+                </div>
+                 <div class="flex items-center gap-3">
+                     <a href="/" class="px-4 py-2 bg-slate-900 text-white text-xs rounded-full hover:bg-slate-800 transition">Back to App</a>
+                 </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-6xl mx-auto px-4 py-12 w-full">
+        
+        <div class="text-center mb-16">
+            <h1 class="text-4xl font-bold text-slate-900 mb-4">Project Overview</h1>
+            <p class="text-slate-500 max-w-2xl mx-auto">Addressing health challenges through cultural preservation and AI innovation.</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
+            <div class="order-2 md:order-1 relative group rounded-2xl overflow-hidden shadow-lg">
+                <img src="https://placehold.co/600x400/fee2e2/991b1b?text=Health+%26+Dietary+Issues" alt="Health Statistics" class="w-full h-full object-cover transform transition duration-700 group-hover:scale-105">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
+                     <p class="text-white font-medium">Combating rising obesity rates in Malaysia</p>
+                </div>
+            </div>
+            <div class="order-1 md:order-2">
+                <div class="inline-block px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold mb-4">Problem Statement</div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">The Need for Dietary Monitoring</h2>
+                <p class="text-slate-600 leading-relaxed mb-4 text-justify">
+                    Malaysia is facing a rise in diet-related health conditions, including obesity, diabetes, and heart disease. While monitoring calorie intake is crucial, manual methods like food diaries are cumbersome and prone to error.
+                </p>
+                <p class="text-slate-600 leading-relaxed text-justify">
+                    Current solutions often lack support for traditional <strong>Malaysian Kuih</strong>. Visual similarity between kuih types and diverse textures makes recognition challenging, creating a gap in local health tools.
+                </p>
+            </div>
+        </div>
+
+        <div class="mb-20">
+            <div class="text-center mb-10">
+                <div class="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold mb-3">Impact</div>
+                <h2 class="text-3xl font-serif font-bold text-slate-800">Project Significance</h2>
+                <p class="text-slate-500 mt-2">Why this project matters to society, culture, and economy.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden group hover:shadow-xl transition-all duration-300">
+                    <div class="h-40 overflow-hidden relative">
+                        <img src="https://placehold.co/400x300/f0fdf4/166534?text=Cultural+Heritage" alt="Cultural Heritage" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-bold text-slate-800 mb-2">Cultural Heritage</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Repackaging traditional kuih knowledge for the younger generation to prevent culinary arts from being lost.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden group hover:shadow-xl transition-all duration-300">
+                    <div class="h-40 overflow-hidden relative">
+                        <img src="https://placehold.co/400x300/fef2f2/991b1b?text=Public+Health" alt="Public Health" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-bold text-slate-800 mb-2">Public Health</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Supporting KKM's obesity reduction campaigns by providing accurate, automated calorie estimations for local foods.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden group hover:shadow-xl transition-all duration-300">
+                    <div class="h-40 overflow-hidden relative">
+                        <img src="https://placehold.co/400x300/eff6ff/1e40af?text=Education" alt="Education" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-bold text-slate-800 mb-2">Education</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            A digital resource for culinary students and a dataset benchmark for academic research in Malaysian food recognition.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden group hover:shadow-xl transition-all duration-300">
+                    <div class="h-40 overflow-hidden relative">
+                        <img src="https://placehold.co/400x300/fdf4ff/86198f?text=Economy" alt="Economy" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-bold text-slate-800 mb-2">Economy</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Empowering small-scale vendors in the East Coast by digitalizing and promoting their traditional products.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <div class="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold mb-4">The Solution</div>
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">AI-Powered Recognition</h2>
+                <p class="text-slate-600 leading-relaxed mb-4 text-justify">
+                    This project leverages <strong>Convolutional Neural Networks (CNN)</strong> to automate the recognition of traditional Kuih. The system extracts visual features to identify specific types with high accuracy.
+                </p>
+                <ul class="space-y-3 mt-6">
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-check-circle text-emerald-500 mt-1"></i>
+                        <span class="text-slate-600 text-sm"><strong>Automated Calorie Mapping:</strong> Directly links recognized food to official KKM nutritional data.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i class="fa-solid fa-check-circle text-emerald-500 mt-1"></i>
+                        <span class="text-slate-600 text-sm"><strong>Cultural Preservation:</strong> Digitizes knowledge of traditional East Coast delicacies.</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="relative group rounded-2xl overflow-hidden shadow-lg">
+                <img src="https://placehold.co/600x400/d1fae5/065f46?text=CNN+Model+Architecture" alt="Solution Architecture" class="w-full h-full object-cover transform transition duration-700 group-hover:scale-105">
+            </div>
+        </div>
+
+    </main>
+</body>
+</html>
