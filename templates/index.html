@@ -377,7 +377,7 @@
                                         <i class="fa-solid fa-palette mr-1 text-indigo-500"></i> Poster Generation
                                     </p>
                                     <span id="quota-remaining"
-                                        class="px-2 py-0.5 bg-white text-slate-700 text-[10px] font-bold rounded-full border border-slate-200">2/2
+                                        class="px-2 py-0.5 bg-white text-slate-700 text-[10px] font-bold rounded-full border border-slate-200">1/1
                                         remaining</span>
                                 </div>
                                 <p id="quota-reset-time" class="text-[10px] text-slate-500"></p>
@@ -657,7 +657,7 @@
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
             } else {
                 const count = quotaData.remaining || 0;
-                remaining.textContent = `${count}/2 remaining`;
+                remaining.textContent = `${count}/1 remaining`;
 
                 if (count === 0) {
                     remaining.classList.add('bg-red-100', 'text-red-700', 'border-red-300');
@@ -683,7 +683,7 @@
                     remaining.classList.add('bg-white', 'text-slate-700', 'border-slate-200');
                     btn.disabled = false;
                     btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    resetTime.textContent = count === 1 ? '⚠️ Last poster remaining!' : '';
+                    resetTime.textContent = '⚠️ Last poster remaining!';
                 }
             }
         }
@@ -783,6 +783,23 @@
                     throw new Error(createData.error || 'Poster generation limit reached');
                 }
 
+                // Check if we got an immediate result (synchronous mode - Redis unavailable)
+                if (createData.success && createData.image_base64) {
+                    console.log('Synchronous mode: received image directly');
+                    img.src = createData.image_base64;
+                    downloadLink.href = createData.image_base64;
+                    downloadLink.download = `${kuihName.replace(/\s+/g, '_')}_poster.png`;
+                    resultDiv.classList.remove('hidden');
+                    loader.classList.add('hidden');
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                    // Refresh quota
+                    await fetchQuotaStatus();
+                    return;
+                }
+
+                // Async mode - we have a job_id to poll
                 if (!createData.job_id) {
                     throw new Error(createData.error || 'Failed to create poster generation job');
                 }
@@ -924,7 +941,7 @@
             </div>
 
             <p class="text-sm text-slate-600 mb-4">
-                Enter the unlock code to get 2 more poster generations.
+                Enter the unlock code to get 1 more poster generation.
             </p>
 
             <input id="unlock-code-input" type="text" placeholder="Enter unlock code"

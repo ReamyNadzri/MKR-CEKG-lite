@@ -109,7 +109,7 @@ redis_connection_ok = False
 # --- NEW: Poster Generation Quota Configuration ---
 POSTER_QUOTA_LIMIT = 1  # Number of posters allowed (1 = once per user)
 POSTER_QUOTA_WINDOW = 31536000  # Effectively permanent (1 year in seconds)
-POSTER_UNLOCK_CODE = "CSP650FYP"  # Unlock code to reset quota permanently
+POSTER_UNLOCK_CODE = "CSP650FYP"  # Unlock code to refill quota (gives 1 more generation)
 
 # --- NEW: Gemini AI Configuration (Unchanged) ---
 try:
@@ -525,7 +525,7 @@ def use_poster_quota(ip_address):
 
 def unlock_poster_quota(ip_address, unlock_code):
     """
-    Resets poster generation quota for an IP address (Refill to 2/2).
+    Resets poster generation quota for an IP address (Refill to 1/1 - gives 1 more generation).
     Returns: True if unlock successful, False if code invalid
     """
     if unlock_code != POSTER_UNLOCK_CODE:
@@ -984,7 +984,8 @@ def generate_poster():
         logger.warning("Redis not available, falling back to synchronous poster generation")
         # Consume quota for synchronous generation
         use_poster_quota(user_ip)
-        # Redirect to synchronous endpoint
+        # Call synchronous generation and return the result directly
+        # The frontend will detect the image_base64 field and skip polling
         return generate_poster_sync()
 
     try:
@@ -1094,7 +1095,7 @@ def unlock_poster():
     if success:
         return jsonify({
             "success": True,
-            "message": "Unlock successful! You have 2 more poster generations."
+            "message": "Unlock successful! You have 1 more poster generation."
         })
     else:
         return jsonify({
