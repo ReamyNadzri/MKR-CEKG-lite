@@ -836,6 +836,13 @@
                         if (statusData.status === 'COMPLETED') {
                             clearInterval(pollInterval);
 
+                            console.log('Job COMPLETED. Full response:', statusData);
+                            console.log('Has result?', !!statusData.result);
+                            console.log('Result:', statusData.result);
+                            if (statusData.result) {
+                                console.log('Has image_base64?', 'image_base64' in statusData.result);
+                            }
+
                             if (statusData.result && statusData.result.image_base64) {
                                 img.src = statusData.result.image_base64;
                                 downloadLink.href = statusData.result.image_base64;
@@ -845,6 +852,7 @@
                                 btn.disabled = false;
                                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
                             } else {
+                                console.error('Missing image data in response:', statusData);
                                 throw new Error("No image in completed job");
                             }
                         } else if (statusData.status === 'FAILED') {
