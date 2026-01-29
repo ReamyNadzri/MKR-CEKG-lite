@@ -345,11 +345,12 @@
     <div id="mekar-loading-screen"
         class="loading-screen-overlay fixed inset-0 bg-gradient-to-br from-emerald-900 via-emerald-700 to-teal-800 z-[9999] flex flex-col items-center justify-center">
         <!-- Logo Container -->
-        <div class="mekar-logo mb-8 text-center flex flex-col items-center mt-48">
+        <div class="mekar-logo mb-8 text-center flex flex-col items-center mt-20 md:mt-48">
 
 
             <!-- Main Text Logo (Bigger & Animated) -->
-            <div id="mekar-logo-container" class="h-96 w-full flex justify-center items-center mb-6">
+            <div id="mekar-logo-container"
+                class="h-40 sm:h-64 md:h-80 lg:h-96 w-full flex justify-center items-center mb-6 px-4">
                 <!-- SVG injected via JS -->
             </div>
             <p
@@ -1219,7 +1220,7 @@
                         const svg = container.querySelector('svg');
                         if (svg) {
                             svg.style.height = '100%';
-                            svg.style.width = 'auto';
+                            svg.style.width = '100%';
 
                             // Add animation class to all paths
                             const paths = svg.querySelectorAll('path');
