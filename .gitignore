@@ -85,3 +85,4 @@ Thumbs.db
 # Backups (keep the backups we created)
 # templates_backup_20260127/ - Keep this
 # app_backup_20260127.py - Keep this
+*.bat
